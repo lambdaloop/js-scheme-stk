@@ -2063,9 +2063,14 @@ var ReservedSymbolTable = new Hash({
         if (args.length == 0) {
             throw IllegalArgumentCountError('/', 'at least', 1, args.length);
         } else if (args.length == 1) {
+			if(args[0] == 0)
+				throw new JSError("Cannot divide by zero", "DivideByZero");
             return 1 / args[0];
         } else {
-            return Util.mapOp(function(lhs, rhs) { return lhs / rhs; }, args[0],
+            return Util.mapOp(function(lhs, rhs) { 	
+				if(rhs == 0)
+					throw new JSError("Cannot divide by zero", "DivideByZero");
+				return lhs / rhs; }, args[0],
                               Util.cdr(args),'/');
         }
     }, 'Returns the quotient of the arguments. With one argument, returns the ' +
