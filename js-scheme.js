@@ -2952,7 +2952,7 @@ window.onload = function() {
 
     // put in the extra scheme =D
     //    jscm_parse_eval(extraScm);
-    jscm_load_file('berkeley_simply.scm')
+    jscm_load_file('scheme-lib/berkeley_simply.scm')
 
     $(Document.INPUT).onkeydown = jscm_onkeydown;
     REPL.focus();
