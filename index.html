@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <title>js-scheme - a Scheme interpreter written in JavaScript</title>
+    <link rel="stylesheet" type="text/css" href="js-scheme.css?r=2" />
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.1.0/prototype.js"></script>
+    <script type="text/javascript" src="js-scheme.js?r=51"></script>
+    <script type="text/javascript" src="libs/last.fm/last.fm.js?r=1"></script>
+    <script type="text/javascript" src="libs/flot/jquery.js"></script>
+    <script type="text/javascript" src="libs/flot/jquery.flot.pack.js"></script>
+    <script type="text/javascript" src="libs/flot/flot.js"></script>
+  </head>
+  <body>
+    <div id="console">
+      <h1><strong>JS-SCHEME</strong> -
+      <script type="text/javascript">document.write(JSScheme.version)</script>
+      -
+      <script type="text/javascript">document.write(JSScheme.date)</script></h1>
+      <div class="intro">
+	<p>
+	  Welcome to JS-SCHEME!
+	</p>
+	<p>
+	  This is an interpreter for a small subset of the Scheme 
+	  programming language written entirely in JavaScript.
+	</p>
+	<p>
+	  Enter <span style="font-weight:bold;color:green;">(help)</span> for 
+	  more information.
+	</p>
+      </div>
+      <noscript>
+	<span class="error">Oops!  JavaScript is disabled.</span>
+      </noscript>
+    </div>
+    <form onsubmit="jscm_repl(); return false;">
+      <span id="prefix">&gt;&nbsp;</span><input type="text" name="input" 
+						id="input" />
+    </form>
+    <!--[if IE]>
+	<style type="text/css">#console,form {display:none;}</style>
+	js-scheme doesn't work with Internet Explorer.
+    <![endif]-->
+  </body>
+</html>

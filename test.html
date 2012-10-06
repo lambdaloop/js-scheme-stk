@@ -1,0 +1,155 @@
+<html>
+<head>
+<title>test page</title>
+<script type="text/javascript" src="/jsunit/app/jsUnitCore.js"></script>
+<script type="text/javascript" src="prototype.js"></script>
+<script type="text/javascript">
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET","/js-scheme/prototype.js",false);
+  xhr.send();
+  proto = xhr.responseXML;
+  eval(proto);
+</script>
+<script type="text/javascript" src="js-scheme.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+  function testTestingWorks() {
+    assertEquals(1,1);
+  }
+  function testEvalIsPresent() {
+    assertTrue(Boolean(window.jscm_eval));
+  }
+  function testCanTestForFunctions() {
+    assertFalse(Boolean(window.obviously_fake_function));
+  }
+  function testEnvironmentClassIsPresent() {
+    assertTrue(Boolean(Environment));
+  }
+  function testReplObjectIsPresent() {
+    assertTrue(Boolean(REPL));
+  }
+  function testEvalIntegerLiteral() {
+    assertEquals(1, jscm_eval(REPL.parser.parse('1'), GlobalEnvironment));
+  }
+  function testCanEvalPlusExpression() {
+    assertEquals(2, jscm_eval(
+      REPL.parser.parse('(+ 1 1)'), GlobalEnvironment));
+  }
+  function testCanEvalTernaryPlusExpression() {
+    assertEquals(3, jscm_eval(
+      REPL.parser.parse('(+ 1 1 1)'), GlobalEnvironment));
+  }
+  function testCanEvalNestedAddition() {
+    assertEquals(5, jscm_eval(
+      REPL.parser.parse('(+ (+ 1 1) (+ 1 (+ 1 1)))'), GlobalEnvironment));
+  }
+  function testCanEvalSubtract() {
+    assertEquals(1, jscm_eval(
+      REPL.parser.parse('(- 3 2)'), GlobalEnvironment));
+  }
+  function testCanEvalMultiply() {
+    assertEquals(6, jscm_eval(
+      REPL.parser.parse('(* 2 3)'), GlobalEnvironment));
+  }
+  function testCanEvalDivide() {
+    assertEquals(2, jscm_eval(
+      REPL.parser.parse('(/ 6 3)'), GlobalEnvironment));
+  }
+  function testEvalQuotedString() {
+    assertEquals("xyz", jscm_eval(
+      REPL.parser.parse("(quote xyz)"), GlobalEnvironment));
+  }
+  function testEvalSingleQuoteAsQuoteFunction() {
+    assertEquals("xyz", jscm_eval(
+      REPL.parser.parse("'xyz"), GlobalEnvironment));
+  }
+  function testEvalDefinePersistsInEnvironment() {
+    var e = new Environment();
+    try {
+      jscm_eval(REPL.parser.parse("x"), e);
+      var threw = false;
+    } catch (err) {
+      var threw = true;
+    }
+    assertTrue(threw);
+    jscm_eval(REPL.parser.parse("(define x 1)"), e);
+    assertEquals(1, jscm_eval(REPL.parser.parse("x"), e));
+  }
+  function testCarGetsFirstElementOfCons() {
+    assertEquals(1, jscm_eval(
+      REPL.parser.parse("(car (cons 1 2))"), GlobalEnvironment));
+  }
+  function testCdrGetsSecondElementOfCons() {
+    assertEquals(2, jscm_eval(
+      REPL.parser.parse("(cdr (cons 1 2))"), GlobalEnvironment));
+  }
+  function testNoArgListCallYieldsQuotedEmptyList() {
+    assertArrayEquals(
+      jscm_eval(REPL.parser.parse("'()"), GlobalEnvironment),
+      jscm_eval(REPL.parser.parse("(list)"), GlobalEnvironment));
+  }
+  function testEmptyListEvalsToNull() {
+    assert(jscm_eval(REPL.parser.parse("(null? '())"), GlobalEnvironment));
+  }
+  function testListWithNoArgsEvalsToNull() {
+    assert(jscm_eval(REPL.parser.parse("(null? (list))"), GlobalEnvironment));
+  }
+  function testAtomIsNotNull() {
+    assertFalse(jscm_eval(REPL.parser.parse("(null? 'a)"),
+                GlobalEnvironment));
+  }
+  function testNonEmptyListIsNotNull() {
+    assertFalse(jscm_eval(REPL.parser.parse("(null? (list 1))"),
+                          GlobalEnvironment));
+  }
+  function testConsMakesAPair() {
+    assert(jscm_eval(REPL.parser.parse("(pair? (cons 1 2))"),
+                     GlobalEnvironment));
+  }
+  function testListMakesAPair() {
+    assert(jscm_eval(REPL.parser.parse("(pair? (list 1))"),
+                     GlobalEnvironment));
+  }
+  function testEmptyListIsNotAPair() {
+    assertFalse(jscm_eval(REPL.parser.parse("(pair? (list))"),
+                          GlobalEnvironment));
+  }
+  function testAtomIsNotAPair() {
+    assertFalse(jscm_eval(REPL.parser.parse("(pair? 'a)"),
+                          GlobalEnvironment));
+  }
+  function testListMakesAList() {
+    assert(jscm_eval(REPL.parser.parse("(list? (list 1))"),
+                     GlobalEnvironment));
+  }
+  function testLongerListIsAList() {
+    assert(jscm_eval(REPL.parser.parse("(list? (list 'a 'b))"),
+                     GlobalEnvironment));
+  }
+  function testRegularPairIsNotAList() {
+    assertFalse(jscm_eval(REPL.parser.parse("(list? (cons 1 2))"),
+                          GlobalEnvironment));
+  }
+  function testPairIsNotAListEvenIfItContainsAList() {
+    assertFalse(jscm_eval(REPL.parser.parse("(list? (cons (list 1) 2))"),
+                          GlobalEnvironment));
+  }
+  function testAtomIsNotAList() {
+    assertFalse(jscm_eval(REPL.parser.parse("(list? 1)"),
+                          GlobalEnvironment));
+  }
+  function testDefineInItsAlternateFormWithAnIdentityFunction() {
+    var e = new Environment();
+    jscm_eval(REPL.parser.parse("(define (f x) x)"), e);
+    assertEquals(1, jscm_eval(REPL.parser.parse("(f 1)"), e));
+  }
+  function testDefineAFunctionOfTwoArguments() {
+    var e = new Environment();
+    jscm_eval(REPL.parser.parse("(define (f x y) (+ x y))"), e);
+    assertEquals(3, jscm_eval(REPL.parser.parse("(f 1 2)"), e));
+  }    
+</script>
+<h1>test page</h1>
+</body>
+</html>
