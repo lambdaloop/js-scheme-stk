@@ -20,9 +20,11 @@ a:hover { background: #def4f7; }
 
 :focus { outline: 0; }
 
-.value { color: #a2a2a2; }
+.value { color: #222222;
+	   }
 
 .error { color: red; }
+	   
 
 .warning { color: #cca45e; }
 
