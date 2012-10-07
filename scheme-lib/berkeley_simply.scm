@@ -1,11 +1,4 @@
-(define (destroy-the-world!)
-  (define (mwhahaha n)
-    (if (<= n 0)
-        'done
-        (begin (print "MWHAHAHAHAHA!!!")
-               (mwhahaha (- n 1)))))
-  (print "DESTROYED WORLD!!!!")
-  (mwhahaha 100))
+
 
 (define defmacro
   (macro (params body)
@@ -1118,3 +1111,15 @@
                 (cadr err-fail) "error(s). -----" ))
     (newline)
     ))
+
+;; some easter eggs =)
+
+(define (destroy-the-world!)
+  (define (mwhahaha n)
+    (if (<= n 0)
+        'done
+        (begin (print "MWHAHAHAHAHA!!!")
+               (mwhahaha (- n 1)))))
+  (print "DESTROYED WORLD!!!!")
+  (mwhahaha 100))
+
