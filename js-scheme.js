@@ -1909,11 +1909,17 @@ var ReservedSymbolTable = new Hash({
         return parseInt(args[0]/args[1]);
     }, 'Rounds <em>z</em> to the nearest integer.','z'),
     'random': new Builtin('random', function(args) {
-        if (args.length != 0) {
-            throw IllegalArgumentCountError('random', 'exactly', 0, args.length);
+        if (args.length > 1) {
+            throw IllegalArgumentCountError('random', 'exactly 1 or ', 0, args.length);
         }
-        return Math.random();
-    }, 'Returns a pseudo-random number in the range [0,1).'),
+		if(args.length == 0)
+			return Math.random();
+		else if(!Util.isNumber(args[0]))
+			throw IllegalArgumentTypeError('random', args[0], 1)
+		else
+			return Math.floor((Math.random()*args[0])); 
+
+    }, 'Given no arguments, returns a pseudo-random real in the range [0,1). With one argument n, returns a pseudo-random integer in [0,n)'),
     'reverse': new Builtin('reverse', function(args) {
         if (args.length != 1)
             throw IllegalArgumentCountError('reverse', 'exactly', 1, args.length);
