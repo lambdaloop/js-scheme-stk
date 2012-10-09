@@ -287,11 +287,13 @@ var Util = new (Class.create({
 
     makeProcedure: function(errorName, e, env) {
         var proc = undefined;
+		var body = e.slice(2);
+		
         if (Util.isAtom(e[1])) {
             proc = function(args) {
                 env = env.extension();
                 env.extend(e[1], new Box(Util.arrayToList(args)));
-                return jscm_beglis(Util.cdr(Util.cdr(e)), env);
+                return jscm_beglis(body, env);
             };
         } else if (Object.isArray(e[1])) {
 
@@ -311,6 +313,7 @@ var Util = new (Class.create({
                 }
             }
 
+					
             if(dotPresent) {
                 var listArgName = formals[formals.length-1];
                 formals.length = formals.length - 2;
@@ -326,7 +329,7 @@ var Util = new (Class.create({
                     }
                     env.multiExtend(formals, bargs);
                     env.extend(listArgName, new Box(Util.arrayToList(args.slice(formals.length))));
-                    return jscm_beglis(Util.cdr(Util.cdr(e)), env);
+                    return jscm_beglis(body, env);
                 };
             }
             else {
@@ -340,10 +343,12 @@ var Util = new (Class.create({
                         bargs[i] = new Box(args[i]);
                     }
                     env.multiExtend(formals, bargs);
-                    return jscm_beglis(Util.cdr(Util.cdr(e)), env);
+                    return jscm_beglis(body, env);
                 };
             }
+			
         }
+		proc.body = Util.convertToExternal(e);
         return proc;
     },
 
@@ -364,7 +369,7 @@ var Util = new (Class.create({
 
     convertToExternal : function(expr) {
         if(Object.isArray(expr))
-            return Util.arrayToList(Util.map(Util.convertToInternal, expr));
+            return Util.arrayToList(Util.map(Util.convertToExternal, expr));
         else
             return expr;
     },
@@ -1046,6 +1051,16 @@ var ReservedSymbolTable = new Hash({
     }, 'The expressions are evaluated from left to rigt, and the value of the ' +
                              'last expression is returned.',
                              'expression<sub>1</sub> . expression<sub>n</sub>'),
+	'procedure-body': new Builtin('procedure-body', function(args) {
+        if (args.length != 1) 
+            return undefined;
+		
+		if (typeof args[0] != 'function') 
+			throw IllegalArgumentTypeError('procedure-body', args[0], 1);
+
+		return Util.convertToExternal(args[0].body);
+	}),
+
     'call-with-current-continuation': new Builtin('call-with-current-continuation', function(args) {
         if (args.length != 1) {
             throw IllegalArgumentCountError('call-with-current-continuation',
