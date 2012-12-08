@@ -19,8 +19,8 @@
 *******************************************************************************/
 var JSScheme = {
     author: 'Erik Silkensen (with additions by Pierre Karashchuk)',
-    version: '0.4b STk-0.6',
-    date: '05 Oct 2012'
+    version: '0.4b STk-0.65',
+    date: '08 Dec 2012'
 };
 
 var  Document = {
@@ -187,6 +187,8 @@ var Util = new (Class.create({
             return '#t';
         } else if (expr === false) {
             return '#f';
+        } else if (this.isNull(expr)) {
+            return "()";
         } else if (expr instanceof Promise) {
             return expr.toString();
         } else if (expr instanceof SchemeChar) {
@@ -348,8 +350,9 @@ var Util = new (Class.create({
             }
 
         }
-        proc.body = Util.convertToExternal(e);
-        return proc;
+        p = new Proc('#<compound-procedure>', proc);
+        p.body = Util.convertToExternal(e);
+        return p;
     },
 
     convertToInternal : function(expr) {
@@ -524,7 +527,7 @@ var Promise = Class.create({
         return this.promise;
     },
     toString: function() {
-        return '#[promise ' + this.id + ']';
+        return '#<promise ' + this.id + '>';
     }
 });
 
@@ -670,6 +673,7 @@ var JSStackTrace = Class.create(JSError, {
         this.message.push(msg);
     }
 });
+
 
 function StackTraceError(extraMessage, e)
 {
@@ -889,7 +893,7 @@ var Actions = {
                 x = Util.convertToInternal(x);
             return jscm_eval(x, env)
         } else {
-            if (proc instanceof Builtin) {
+            if (proc instanceof Builtin || proc instanceof Proc) {
                 proc = proc.apply;
             }
             var args = jscm_evlis(Util.cdr(expr), env);
@@ -921,8 +925,6 @@ var Actions = {
 
 var Builtin = Class.create({
     initialize: function(name, apply, doc, argdoc) {
-        Builtin.instances = Builtin.instances === undefined ? 0 : Builtin.instances;
-        Builtin.instances++;
         this.name = name;
         this.apply = apply;
         this.doc = doc;
@@ -932,6 +934,18 @@ var Builtin = Class.create({
         return '#<builtin-procedure ' + this.name + '>';
     }
 });
+
+
+var Proc = Class.create({
+    initialize: function(name, apply) {
+        this.name = name;
+        this.apply = apply;
+    },
+    toString: function() {
+        return '#<compound-procedure ' + this.name + '>';
+    }
+});
+
 
 var SpecialForm = Class.create(Builtin, {
     initialize: function($super, name, apply, doc, argdoc) {
@@ -944,7 +958,7 @@ var SpecialForm = Class.create(Builtin, {
 
 var Macro = Class.create(Builtin, {
     initialize: function($super, apply, doc, argdoc) {
-        $super('', apply, doc, argdoc);
+        $super('#<macro>', apply, doc, argdoc);
     },
     toString: function() {
         return '#<macro>';
@@ -1051,14 +1065,25 @@ var ReservedSymbolTable = new Hash({
     }, 'The expressions are evaluated from left to rigt, and the value of the ' +
                              'last expression is returned.',
                              'expression<sub>1</sub> . expression<sub>n</sub>'),
+
+    'body': new Builtin('body', function(args) {
+        if (args.length != 1)
+            return undefined;
+
+        if (!(args[0] instanceof Proc || args[0] instanceof Macro))
+            throw IllegalArgumentTypeError('body', args[0], 1);
+
+        return args[0].body;
+    }),
+
     'procedure-body': new Builtin('procedure-body', function(args) {
         if (args.length != 1)
             return undefined;
 
-        if (typeof args[0] != 'function')
+        if (!(args[0] instanceof Proc))
             throw IllegalArgumentTypeError('procedure-body', args[0], 1);
 
-        return Util.convertToExternal(args[0].body);
+        return args[0].body;
     }),
 
     'call-with-current-continuation': new Builtin('call-with-current-continuation', function(args) {
@@ -1224,12 +1249,13 @@ var ReservedSymbolTable = new Hash({
                 var rhs = Util.cons(Tokens.LAMBDA,
                                     Util.cons(Util.cdr(Util.car(Util.cdr(e))),
                                               Util.cdr(Util.cdr(e))));
+                var val = jscm_eval(rhs, env);
+                val.name = "#<compound-procedure " + name + ">";
+
                 if (ReservedSymbolTable.get(name) != undefined) {
-                    var val = jscm_eval(rhs, env);
                     ReservedSymbolTable.set(name, val);
                     return name;
                 } else {
-                    var val = jscm_eval(rhs, env);
                     env.extend(name, new Box(val));
                     return name;
                 }
@@ -1437,9 +1463,7 @@ var ReservedSymbolTable = new Hash({
             throw new JSError(Util.format(e), "Ill-formed special form", false);
         }
 
-        var proc = Util.makeProcedure('#[compound-procedure]', e, env);
-        proc.name = '#[compound-procedure]';
-        return proc;
+        return Util.makeProcedure('#<compound-procedure>', e, env);
     }, 'Evaluates to a procedure.  Currently, there are two possible forms for ' +
                               '&lt;formals&gt;:<ul style="margin-top:5px;"><li>(variable<sub>1' +
                               '</sub> ...) <p>The procedure takes'+
@@ -1450,9 +1474,10 @@ var ReservedSymbolTable = new Hash({
         if (e.length < 3) {
             throw new JSError(Util.format(e), "Ill-formed special form", false);
         }
-        var proc = Util.makeProcedure("#[macro]", e, env);
-        proc.name = '#[macro]';
-        return new Macro(proc);
+        var proc = Util.makeProcedure("#<macro>", e, env);
+        var result = new Macro(p.apply);
+        result.body = proc.body;
+        return result;
     }, 'Evaluates to a macro.  Currently, there are two possible forms for ' +
                              '&lt;formals&gt;:<ul style="margin-top:5px;"><li>(variable<sub>1' +
                              '</sub> ...) <p>The macro takes'+
