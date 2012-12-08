@@ -2819,7 +2819,7 @@ function jscm_getHelp() {
         'Berkeley STk additions are written by Pierre Karashchuk' +
         '</p>' +
         '<p>' +
-        'You can find the extended scheme on <a href="https://github.com/lambdaloop/js-scheme-stk">github</a>.' +
+        'You can find the extended js-scheme code on <a href="https://github.com/lambdaloop/js-scheme-stk">github</a>.' +
         '</p>'
         builtins +
         '</div></div>';
