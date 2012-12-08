@@ -2820,7 +2820,7 @@ function jscm_getHelp() {
         '</p>' +
         '<p>' +
         'You can find the extended js-scheme code on <a href="https://github.com/lambdaloop/js-scheme-stk">github</a>.' +
-        '</p>'
+        '</p>' +
         builtins +
         '</div></div>';
 }
