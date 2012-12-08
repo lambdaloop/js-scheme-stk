@@ -93,7 +93,7 @@ var Util = new (Class.create({
         this.isOctal = this.createMatcher(Tokens.OCTAL);
         var OR = '|';
         this.isNumberString = this.createMatcher(Tokens.BINARY + OR + Tokens.DECIMAL +
-												 OR + Tokens.HEX + OR + Tokens.OCTAL);
+                                                 OR + Tokens.HEX + OR + Tokens.OCTAL);
         this._isCharacter = this.createMatcher(Tokens.CHARACTER);
     },
 
@@ -204,13 +204,13 @@ var Util = new (Class.create({
             return expr.toString();
         } else if (typeof expr == 'string') {
             return expr;
-			// } else if (Object.isArray(expr) && expr[0] instanceof Pair) {
-			//     var cpy = expr.clone();
-			//     for (var i = 0; i < cpy.length; i++) {
-			//         cpy[i] = this.format(cpy[i]);
-			//     }
-			//     return Object.inspect(cpy).gsub('[\\[]', '(').gsub(']',')').gsub(',','')
-			//         .gsub('\'','');
+            // } else if (Object.isArray(expr) && expr[0] instanceof Pair) {
+            //     var cpy = expr.clone();
+            //     for (var i = 0; i < cpy.length; i++) {
+            //         cpy[i] = this.format(cpy[i]);
+            //     }
+            //     return Object.inspect(cpy).gsub('[\\[]', '(').gsub(']',')').gsub(',','')
+            //         .gsub('\'','');
         } else if (Object.isArray(expr)) {
             var isqtd = expr.length > 0 && expr[0] == Tokens.QUOTE;
             var str = isqtd ? '\'' : '<';
@@ -226,16 +226,16 @@ var Util = new (Class.create({
         }
     },
 
-	formatExpr : function(expr) {
+    formatExpr : function(expr) {
 
-		if(Object.isArray(expr)) {
-			var out = expr.clone();
+        if(Object.isArray(expr)) {
+            var out = expr.clone();
             for(var i=0; i<out.length; i++)
                 out[i] = this.formatExpr(out[i]);
             return '(' + out.join(' ') + ')';
-		} else
-			return this.format(expr);
-	},
+        } else
+            return this.format(expr);
+    },
 
     map: function(op, args) {
         var res = [];
@@ -287,8 +287,8 @@ var Util = new (Class.create({
 
     makeProcedure: function(errorName, e, env) {
         var proc = undefined;
-		var body = e.slice(2);
-		
+        var body = e.slice(2);
+
         if (Util.isAtom(e[1])) {
             proc = function(args) {
                 env = env.extension();
@@ -313,7 +313,7 @@ var Util = new (Class.create({
                 }
             }
 
-					
+
             if(dotPresent) {
                 var listArgName = formals[formals.length-1];
                 formals.length = formals.length - 2;
@@ -346,9 +346,9 @@ var Util = new (Class.create({
                     return jscm_beglis(body, env);
                 };
             }
-			
+
         }
-		proc.body = Util.convertToExternal(e);
+        proc.body = Util.convertToExternal(e);
         return proc;
     },
 
@@ -400,8 +400,8 @@ var Graphics = new( Class.create({
     },
 
     addImage: function(img, orig, dimensions)  {
-		// if(dimensions == undefined)
-		// 	dimensions = [1, 1];
+        // if(dimensions == undefined)
+        //  dimensions = [1, 1];
         this.toDraw.push(["image", [img, orig, dimensions]]);
     },
 
@@ -427,7 +427,7 @@ var Graphics = new( Class.create({
     {
         var p1 = this.standardToReal(data[0]);
         var p2 = this.standardToReal(data[1]);
-        
+
         ctx.moveTo(p1[0], p1[1]);
         ctx.lineTo(p2[0], p2[1]);
         ctx.stroke();
@@ -437,14 +437,14 @@ var Graphics = new( Class.create({
     {
         var img = data[0];
         var p = this.standardToReal(data[1]);
-		var wh = undefined;
-		if(data[2] != undefined)
-			wh = [data[2][0]*Graphics.width, data[2][1]*Graphics.height];
+        var wh = undefined;
+        if(data[2] != undefined)
+            wh = [data[2][0]*Graphics.width, data[2][1]*Graphics.height];
 
-		if(wh == undefined)
-			img.onload = function() {ctx.drawImage(img, p[0], p[1]);};
-		else
-			img.onload = function() {ctx.drawImage(img, p[0], p[1], wh[0], wh[1]);};
+        if(wh == undefined)
+            img.onload = function() {ctx.drawImage(img, p[0], p[1]);};
+        else
+            img.onload = function() {ctx.drawImage(img, p[0], p[1], wh[0], wh[1]);};
     },
 
     drawThing: function(context, thing) {
@@ -457,12 +457,12 @@ var Graphics = new( Class.create({
             break;
         }
     },
-    
+
     drawStuff: function(context) {
         for(var i=0; i<this.toDraw.length; i++)
             this.drawThing(context, this.toDraw[i]);
     }
-    
+
 }))();
 
 var Vector = Class.create({
@@ -656,31 +656,31 @@ var JSError = Class.create({
 
 var JSStackTrace = Class.create(JSError, {
     toString: function() {
-		var msg = '';
-		if(Object.isArray(this.message)) {
-			for(var i=0; i<this.message.length; i++) {
-				msg += '\n';
-				msg += i + '\u00a0\u00a0\u00a0\u00a0' + this.message[i];
-			}
-		} else
-			msg = this.message+'';
+        var msg = '';
+        if(Object.isArray(this.message)) {
+            for(var i=0; i<this.message.length; i++) {
+                msg += '\n';
+                msg += i + '\u00a0\u00a0\u00a0\u00a0' + this.message[i];
+            }
+        } else
+            msg = this.message+'';
         return 'Stack Trace' + ': ' + msg;
     },
-	addMessage: function(msg) {
-		this.message.push(msg);
-	}
+    addMessage: function(msg) {
+        this.message.push(msg);
+    }
 });
 
 function StackTraceError(extraMessage, e)
 {
-	if(e.type == 'StackTrace') {
-		e.addMessage(extraMessage);
-		return e;
-	} else { 
-		var st = new JSStackTrace([e.toString()], 'StackTrace');
-		st.addMessage(extraMessage);
-		return st;
-	}
+    if(e.type == 'StackTrace') {
+        e.addMessage(extraMessage);
+        return e;
+    } else {
+        var st = new JSStackTrace([e.toString()], 'StackTrace');
+        st.addMessage(extraMessage);
+        return st;
+    }
 }
 
 function UnboundVariableError(message) {
@@ -985,13 +985,13 @@ var ReservedSymbolTable = new Hash({
         var res = [];
         if (args.length == 1) {
             return args[0];
-        } 
-        
+        }
+
         res = []
 
         for (var i = 0; i < args.length; i++) {
-            if (!(Util.isNull(args[i]) || 
-				  (args[i] instanceof Pair && args[i].isNullTerminated()))) {
+            if (!(Util.isNull(args[i]) ||
+                  (args[i] instanceof Pair && args[i].isNullTerminated()))) {
                 throw IllegalArgumentTypeError('append', args[i], i+1);
             } else {
                 var p = args[i];
@@ -1004,7 +1004,7 @@ var ReservedSymbolTable = new Hash({
                     throw IllegalArgumentTypeError('append', args[i], i+1);
             }
         }
-        
+
         return Util.arrayToList(res);
     }, '<p>Returns a list consisting of the elements of the first ' +
                           '<em>list</em> followed by the elements of the other <em>list</em>s.</p>' +
@@ -1051,15 +1051,15 @@ var ReservedSymbolTable = new Hash({
     }, 'The expressions are evaluated from left to rigt, and the value of the ' +
                              'last expression is returned.',
                              'expression<sub>1</sub> . expression<sub>n</sub>'),
-	'procedure-body': new Builtin('procedure-body', function(args) {
-        if (args.length != 1) 
+    'procedure-body': new Builtin('procedure-body', function(args) {
+        if (args.length != 1)
             return undefined;
-		
-		if (typeof args[0] != 'function') 
-			throw IllegalArgumentTypeError('procedure-body', args[0], 1);
 
-		return Util.convertToExternal(args[0].body);
-	}),
+        if (typeof args[0] != 'function')
+            throw IllegalArgumentTypeError('procedure-body', args[0], 1);
+
+        return Util.convertToExternal(args[0].body);
+    }),
 
     'call-with-current-continuation': new Builtin('call-with-current-continuation', function(args) {
         if (args.length != 1) {
@@ -1651,7 +1651,7 @@ var ReservedSymbolTable = new Hash({
             throw IllegalArgumentCountError('load-lib', 'exactly', 1, args.length);
 
         file = 'scheme-lib/'+args[0];
-        
+
         res = jscm_load_file(file, true);
 
         if(res)
@@ -1927,12 +1927,12 @@ var ReservedSymbolTable = new Hash({
         if (args.length > 1) {
             throw IllegalArgumentCountError('random', 'exactly 1 or ', 0, args.length);
         }
-		if(args.length == 0)
-			return Math.random();
-		else if(!Util.isNumber(args[0]))
-			throw IllegalArgumentTypeError('random', args[0], 1)
-		else
-			return Math.floor((Math.random()*args[0])); 
+        if(args.length == 0)
+            return Math.random();
+        else if(!Util.isNumber(args[0]))
+            throw IllegalArgumentTypeError('random', args[0], 1)
+        else
+            return Math.floor((Math.random()*args[0]));
 
     }, 'Given no arguments, returns a pseudo-random real in the range [0,1). With one argument n, returns a pseudo-random integer in [0,n)'),
     'reverse': new Builtin('reverse', function(args) {
@@ -2084,14 +2084,14 @@ var ReservedSymbolTable = new Hash({
         if (args.length == 0) {
             throw IllegalArgumentCountError('/', 'at least', 1, args.length);
         } else if (args.length == 1) {
-			if(args[0] == 0)
-				throw new JSError("Cannot divide by zero", "DivideByZero");
+            if(args[0] == 0)
+                throw new JSError("Cannot divide by zero", "DivideByZero");
             return 1 / args[0];
         } else {
-            return Util.mapOp(function(lhs, rhs) { 	
-				if(rhs == 0)
-					throw new JSError("Cannot divide by zero", "DivideByZero");
-				return lhs / rhs; }, args[0],
+            return Util.mapOp(function(lhs, rhs) {
+                if(rhs == 0)
+                    throw new JSError("Cannot divide by zero", "DivideByZero");
+                return lhs / rhs; }, args[0],
                               Util.cdr(args),'/');
         }
     }, 'Returns the quotient of the arguments. With one argument, returns the ' +
@@ -2426,24 +2426,24 @@ var ReservedSymbolTable = new Hash({
         if (args.length != 1)
             throw IllegalArgumentCountError('make-image', 'exactly', 1, args.length);
 
-		var url = args[0]+'';
-		var img = new Image();
-		img.src = url;
-		return img;
+        var url = args[0]+'';
+        var img = new Image();
+        img.src = url;
+        return img;
     }),
 
     'draw-image' : new Builtin('draw-image', function(args) {
         if (args.length != 3)
             throw IllegalArgumentCountError('draw-image', 'exactly', 3, args.length);
-		if (!(args[0] instanceof Image))
-			throw IllegalArgumentTypeError('draw-image', args[0], 1);
+        if (!(args[0] instanceof Image))
+            throw IllegalArgumentTypeError('draw-image', args[0], 1);
         for(var i=1; i<3; i++) {
             if(!Util.isNumber(args[i]))
                 throw IllegalArgumentTypeError('draw-image', args[i], i+1);
-        }		
+        }
 
-		Graphics.addImage(args[0], [args[1], args[2]]);
-		return "done";
+        Graphics.addImage(args[0], [args[1], args[2]]);
+        return "done";
     }),
 
 });
@@ -2647,20 +2647,20 @@ function jscm_quasiquote(expr, env) {
 }
 
 function jscm_eval(expr, env) {
-	try {
-		var action = jscm_expressionToAction(expr);
-		if (typeof action == 'function') {
-			return action(expr, env);
-		} else {
-			throw new TypeError('The object ' + Util.format(action) +
-								' is not applicable.');
-		}
-	} catch(e) {
-		if (e instanceof Escape)
-			throw e;
-		else
-			throw StackTraceError(Util.formatExpr(expr), e);
-	}
+    try {
+        var action = jscm_expressionToAction(expr);
+        if (typeof action == 'function') {
+            return action(expr, env);
+        } else {
+            throw new TypeError('The object ' + Util.format(action) +
+                                ' is not applicable.');
+        }
+    } catch(e) {
+        if (e instanceof Escape)
+            throw e;
+        else
+            throw StackTraceError(Util.formatExpr(expr), e);
+    }
 }
 
 function jscm_beglis(es, env) {
@@ -2737,12 +2737,12 @@ function jscm_printBlock(text, className) {
     var span = document.createElement('span');
     span.addClassName(className);
     span.addClassName('block');
-	var lines = text.split('\n');
-	for(var i=0; i<lines.length-1; i++)
-	{
-		span.appendChild(document.createTextNode(lines[i]));
-		span.appendChild(document.createElement("br"));
-	}
+    var lines = text.split('\n');
+    for(var i=0; i<lines.length-1; i++)
+    {
+        span.appendChild(document.createTextNode(lines[i]));
+        span.appendChild(document.createElement("br"));
+    }
     span.appendChild(document.createTextNode(lines[lines.length-1]));
     jscm_printElement(span);
 }
@@ -2812,12 +2812,15 @@ function jscm_getHelp() {
         'Silkensen</a>.' +
         '</p>' +
         '<p>' +
-        'Berkeley STk additions are written by Pierre Karashchuk' +
-        '</p>' +
-        '<p>' +
         'Visit the <a href="http://js-scheme.googlecode.com">Google Code</a> ' +
         'page for more information.' +
         '</p>' +
+        '<p>' +
+        'Berkeley STk additions are written by Pierre Karashchuk' +
+        '</p>' +
+        '<p>' +
+        'You can find the extended scheme on <a href="https://github.com/lambdaloop/js-scheme-stk">github</a>.' +
+        '</p>'
         builtins +
         '</div></div>';
 }
@@ -2946,7 +2949,7 @@ function jscm_load_file(file, waitForIt) {
     if(waitForIt==undefined) waitForIt = false;
 
     var res = undefined;
-    
+
     jQuery.ajax(
         {url: file,
          success: function(data) {
