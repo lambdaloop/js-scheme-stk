@@ -19,8 +19,8 @@
 *******************************************************************************/
 var JSScheme = {
     author: 'Erik Silkensen (with additions by Pierre Karashchuk)',
-    version: '0.4b STk-0.65',
-    date: '08 Dec 2012'
+    version: '0.4b STk-0.66',
+    date: '10 Dec 2012'
 };
 
 var  Document = {
@@ -1029,7 +1029,7 @@ var ReservedSymbolTable = new Hash({
         if (args.length == 0 || args.length > 2)
             throw IllegalArgumentCountError('apply', '', 'one or two', args.length);
         var proc = args[0];
-        if (proc instanceof Builtin)
+        if (proc instanceof Builtin || proc instanceof Proc)
             proc = proc.apply;
         return proc(Util.listToArray(args[1]));
     }, 'Applies <em>proc</em> to elements of the list <em>args</em>.',
@@ -1092,7 +1092,7 @@ var ReservedSymbolTable = new Hash({
                                             'exactly', 1, args.length);
         }
         var proc = args[0];
-        if (proc instanceof Builtin) {
+        if (proc instanceof Builtin || proc instanceof Proc) {
             proc = proc.apply;
         }
         if (typeof proc != 'function') {
@@ -1250,7 +1250,7 @@ var ReservedSymbolTable = new Hash({
                                     Util.cons(Util.cdr(Util.car(Util.cdr(e))),
                                               Util.cdr(Util.cdr(e))));
                 var val = jscm_eval(rhs, env);
-                val.name = "#<compound-procedure " + name + ">";
+                val.name = name;
 
                 if (ReservedSymbolTable.get(name) != undefined) {
                     ReservedSymbolTable.set(name, val);
@@ -1404,7 +1404,7 @@ var ReservedSymbolTable = new Hash({
         if (args.length < 2)
             throw IllegalArgumentCountError('for-each', 'at least', 2, args.length);
         var proc = args[0];
-        if (proc instanceof Builtin) {
+        if (proc instanceof Builtin || proc instanceof Proc) {
             proc = proc.apply;
         }
         if (typeof proc != 'function') {
@@ -1696,7 +1696,7 @@ var ReservedSymbolTable = new Hash({
         if (args.length != 2)
             throw IllegalArgumentCountError('andmap', 'exactly', 2, args.length);
         var proc = args[0];
-        if (proc instanceof Builtin) {
+        if (proc instanceof Builtin || proc instanceof Proc) {
             proc = proc.apply;
         }
         if (typeof proc != 'function') {
@@ -1720,7 +1720,7 @@ var ReservedSymbolTable = new Hash({
         if (args.length != 2)
             throw IllegalArgumentCountError('ormap', 'exactly', 2, args.length);
         var proc = args[0];
-        if (proc instanceof Builtin) {
+        if (proc instanceof Builtin || proc instanceof Proc) {
             proc = proc.apply;
         }
         if (typeof proc != 'function') {
@@ -1744,7 +1744,7 @@ var ReservedSymbolTable = new Hash({
         if (args.length < 2)
             throw IllegalArgumentCountError('map', 'at least', 2, args.length);
         var proc = args[0];
-        if (proc instanceof Builtin) {
+        if (proc instanceof Builtin || proc instanceof Proc) {
             proc = proc.apply;
         }
         if (typeof proc != 'function') {
@@ -1792,7 +1792,7 @@ var ReservedSymbolTable = new Hash({
         if (args.length < 2)
             throw IllegalArgumentCountError('map', 'at least', 2, args.length);
         var proc = args[0];
-        if (proc instanceof Builtin) {
+        if (proc instanceof Builtin || proc instanceof Proc) {
             proc = proc.apply;
         }
         if (typeof proc != 'function') {
@@ -1902,7 +1902,7 @@ var ReservedSymbolTable = new Hash({
         if (args.length != 1) {
             throw IllegalArgumentCountError('procedure?', 'exactly', 1, args.length);
         }
-        return (typeof args[0] == 'function') ||
+        return (args[0] instanceof Proc) ||
             ((args[0] instanceof Builtin) && !(args[0] instanceof SpecialForm));
     }, 'Returns #t if <em>obj</em> is a procedure.', 'obj'),
     'macro?': new Builtin('macro?', function(args) {
