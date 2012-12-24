@@ -303,17 +303,19 @@ var Util = new (Class.create({
 
             var formals = e[1];
             if (formals.length != formals.uniq().length)
-                throw new JSError(Util.format(e), "Ill-formed special form", false);
+                throw new JSError(Util.formatExpr(e), "Ill-formed special form", false);
 
             var dotPos = formals.length-2;
             var dotPresent = false;
 
             for(var i=0; i<formals.length; i++) {
-                if(formals[i]=='.') {
+                if(!Util.isAtom(formals[i])) {
+                    throw new JSError(Util.formatExpr(e), "Ill-formed special form", false);
+                } else if(formals[i]=='.') {
                     if(i==dotPos)
                         dotPresent = true;
                     else
-                        throw new JSError(Util.format(e), "Ill-formed special form", false);
+                        throw new JSError(Util.formatExpr(e), "Ill-formed special form", false);
                 }
             }
 
@@ -352,7 +354,7 @@ var Util = new (Class.create({
             }
 
         }
-        p = new Proc('#<compound-procedure>', proc);
+        p = new Proc('', proc);
         p.body = Util.convertToExternal(e);
         return p;
     },
@@ -944,7 +946,10 @@ var Proc = Class.create({
         this.apply = apply;
     },
     toString: function() {
-        return '#<compound-procedure ' + this.name + '>';
+        if(this.name == '')
+            return '#<compound-procedure>';
+        else
+            return '#<compound-procedure ' + this.name + '>';
     }
 });
 
@@ -1462,7 +1467,7 @@ var ReservedSymbolTable = new Hash({
     }, 'An <strong>if</strong> expression ', 'test consequent [alternate]'),
     'lambda': new SpecialForm('lambda', function(e, env) {
         if (e.length < 3) {
-            throw new JSError(Util.format(e), "Ill-formed special form", false);
+            throw new JSError(Util.formatExpr(e), "Ill-formed special form", false);
         }
 
         return Util.makeProcedure('#<compound-procedure>', e, env);
@@ -1474,10 +1479,10 @@ var ReservedSymbolTable = new Hash({
                               '</em>.</p></li></ul>', '&lt;formals&gt; body'),
     'macro': new SpecialForm('macro', function(e, env) {
         if (e.length < 3) {
-            throw new JSError(Util.format(e), "Ill-formed special form", false);
+            throw new JSError(Util.formatExpr(e), "Ill-formed special form", false);
         }
         var proc = Util.makeProcedure("#<macro>", e, env);
-        var result = new Macro(p.apply);
+        var result = new Macro(proc.apply);
         result.body = proc.body;
         return result;
     }, 'Evaluates to a macro.  Currently, there are two possible forms for ' +
