@@ -1189,8 +1189,11 @@ var ReservedSymbolTable = new Hash({
         var lines = Util.cdr(e);
         for (var i = 0; i < lines.length; i++) {
             if (jscm_eval(lines[i][0], env)) {
-
-                return jscm_beglis(lines[i].slice(1), env);
+                if(lines[i].length > 1) {
+                    return jscm_beglis(lines[i].slice(1), env);
+                } else {
+                    return true;
+                }
                 //                return jscm_eval(lines[i][1], env);
             }
         }
@@ -1970,7 +1973,7 @@ var ReservedSymbolTable = new Hash({
             return Math.floor((Math.random()*args[0]));
 
     }, 'Given no arguments, returns a pseudo-random real in the range [0,1). With one argument n, returns a pseudo-random integer in [0,n)'),
-        'remainder': new Builtin('quotient', function(args) {
+    'remainder': new Builtin('quotient', function(args) {
         if(args.length != 2)
             throw IllegalArgumentCountError('remainder', 'exactly', 2, args.length);
 
