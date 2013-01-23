@@ -1188,11 +1188,12 @@ var ReservedSymbolTable = new Hash({
     'cond': new SpecialForm('cond', function(e, env) {
         var lines = Util.cdr(e);
         for (var i = 0; i < lines.length; i++) {
-            if (jscm_eval(lines[i][0], env)) {
+            val = jscm_eval(lines[i][0], env);
+            if (val != false) {
                 if(lines[i].length > 1) {
                     return jscm_beglis(lines[i].slice(1), env);
                 } else {
-                    return true;
+                    return val;
                 }
                 //                return jscm_eval(lines[i][1], env);
             }
