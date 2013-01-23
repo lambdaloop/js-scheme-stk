@@ -813,9 +813,11 @@ var Parser = Class.create({
         if (stack.length == 0) {
             throw IgnorableParseWarning("empty");
         } else if (stack.length == 1) {
-            return stack.pop();
+            //            return stack.pop();
+            return stack;
         } else {
-            throw ParseWarning("INFORMATION OVERLOAD!");
+            //            throw ParseWarning("INFORMATION OVERLOAD!");
+            return stack;
         }
     },
     nextSExpr: function(tokens) {
@@ -1311,10 +1313,11 @@ var ReservedSymbolTable = new Hash({
     'eval': new SpecialForm('eval', function(e, env) {
         if (e.length != 2)
             throw IllegalArgumentCountError('eval', 'exactly', 1, e.length - 1);
-        var args = jscm_eval(e[1], env);
-        args = Util.convertToInternal(args);
+        var a = jscm_eval(e[1], env);
+        args = Util.convertToInternal(a);
         if (Util.isAtom(args)) {
-            return jscm_eval(REPL.parser.parse(args), env);
+            //            return jscm_eval(REPL.parser.parse(args), env);
+            return a;
         } else if ((args instanceof Pair) && args.isNullTerminated()) {
             return jscm_eval(args, env);
         } else if (!Util.isNull(args)) {
@@ -2615,18 +2618,27 @@ function jscm_repl() {
             }
             return false;
         }
-        try {
-            jscm_print(jscm_eval(scm, GlobalEnvironment));
-        } catch (e) {
-            if (e instanceof Escape) {
-                e.invoke();
-                if (REPL.buffer.length > 0) {
-                    jscm_printElement();
+
+        var res = [];
+        for(var i=0; i<scm.length; i++)
+        {
+            try {
+                res.push(jscm_result_string_array(jscm_eval(scm[i], GlobalEnvironment)));
+            } catch (e) {
+                if (e instanceof Escape) {
+                    e.invoke();
+                    if (REPL.buffer.length > 0) {
+                        jscm_printElement();
+                    }
+                } else {
+                    // jscm_print(e);
+                    res.push(jscm_result_string_array(e));
+                    //                    res += jscm_result_string(e);
                 }
-            } else {
-                jscm_print(e);
             }
         }
+
+        jscm_printBlocks(res);
         REPL.reset();
     }
     return false;
@@ -2726,6 +2738,19 @@ function jscm_expressionToAction(expr) {
     }
 }
 
+function jscm_result_string_array(obj) {
+    if (obj instanceof JSWarning) {
+        return [';' + obj, 'warning'];
+    } else if ((obj instanceof Error) || (obj instanceof JSError)) {
+        return [';' + obj, 'error'];
+    } else {
+        return ['' + Util.format(obj), 'value'];
+    }
+
+}
+
+
+
 function jscm_print(obj) {
     if (obj instanceof JSWarning) {
         jscm_printBlock(';' + obj, 'warning');
@@ -2778,6 +2803,31 @@ function jscm_printBlock(text, className) {
     span.appendChild(document.createTextNode(lines[lines.length-1]));
     jscm_printElement(span);
 }
+
+function jscm_printBlocks(blocks) {
+    var d = document.createElement('div');
+    var text = undefined;
+    var className = undefined;
+    for(var z=0; z<blocks.length; z++)   {
+
+        text = blocks[z][0];
+        className = blocks[z][1];
+        var span = document.createElement('span');
+        span.addClassName(className);
+        span.addClassName('block');
+        var lines = text.split('\n');
+        for(var i=0; i<lines.length-1; i++)
+        {
+            span.appendChild(document.createTextNode(lines[i]));
+            span.appendChild(document.createElement("br"));
+        }
+        span.appendChild(document.createTextNode(lines[lines.length-1]));
+
+        d.appendChild(span);
+    }
+    jscm_printElement(d);
+}
+
 
 function jscm_printDisplay(text) {
     REPL.appendbuff(text);
@@ -2951,7 +3001,9 @@ function jscm_onkeydown(e) {
 
 function jscm_parse_eval(str) {
     var scm = REPL.parser.parse(str);
-    jscm_eval(scm, GlobalEnvironment);
+    for(var i=0; i<scm.length; i++) {
+        jscm_eval(scm[i], GlobalEnvironment);
+    }
 }
 
 function strip_whitespace(x) {
