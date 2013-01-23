@@ -2393,9 +2393,9 @@ var ReservedSymbolTable = new Hash({
 
         var v = args[0].string;
 
-        if(args[1] < 0 || args[1] >= v.length)
+        if(args[1] < 0 || args[1] > v.length)
             throw IllegalArgumentError("substring: start "+args[1]+" is out of range");
-        if(args[2] < 0 || args[2] >= v.length)
+        if(args[2] < 0 || args[2] > v.length)
             throw IllegalArgumentError("substring: end "+args[2]+" is out of range");
         if(args[1] > args[2])
             throw IllegalArgumentError("substring: start "+args[1]+" is greater than end "+args[2]);
