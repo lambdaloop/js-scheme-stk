@@ -1957,7 +1957,7 @@ var ReservedSymbolTable = new Hash({
             throw IllegalArgumentTypeError('quotient', args[1], 2)
 
         return parseInt(args[0]/args[1]);
-    }, 'Rounds <em>z</em> to the nearest integer.','z'),
+    }, 'Rounds the integer quotient of <em>x</em> divided by <em>y</em>.','x y'),
     'random': new Builtin('random', function(args) {
         if (args.length > 1) {
             throw IllegalArgumentCountError('random', 'exactly 1 or ', 0, args.length);
@@ -1970,6 +1970,17 @@ var ReservedSymbolTable = new Hash({
             return Math.floor((Math.random()*args[0]));
 
     }, 'Given no arguments, returns a pseudo-random real in the range [0,1). With one argument n, returns a pseudo-random integer in [0,n)'),
+        'remainder': new Builtin('quotient', function(args) {
+        if(args.length != 2)
+            throw IllegalArgumentCountError('remainder', 'exactly', 2, args.length);
+
+        if(!Util.isNumber(args[0]))
+            throw IllegalArgumentTypeError('remainder', args[0], 1)
+        if(!Util.isNumber(args[1]))
+            throw IllegalArgumentTypeError('remainder', args[1], 2)
+
+        return parseInt(args[0]%args[1]);
+    }, 'Computes the remainder of <em>num</em> modulo <em>rem</em>','num rem'),
     'reverse': new Builtin('reverse', function(args) {
         if (args.length != 1)
             throw IllegalArgumentCountError('reverse', 'exactly', 1, args.length);
