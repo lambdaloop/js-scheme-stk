@@ -2799,19 +2799,28 @@ function jscm_beglis(es, env) {
                 }
             } else if (proc instanceof SpecialForm && proc.name == "cond") {
                 var lines = Util.cdr(last_expr);
-                var val = undefined;
+                var val = false;
+
+                inner_loop_beglis:
                 for (var j = 0; j < lines.length; j++) {
-                    val = jscm_eval(lines[i][0], env);
-                    if (val != false) {
-                        if(lines[i].length > 1) {
-                            es = lines[i].slice(1);
-                            break;
+                    val = jscm_eval(lines[j][0], env);
+                    if (val != false && val != undefined) {
+                        if(lines[j].length > 1) {
+                            es = lines[j].slice(1);
+                            val = undefined;
+                            break inner_loop_beglis;
                         } else {
                             return val;
                         }
                     }
                 }
-                return undefined;
+
+                if(val == false) {
+                    return undefined; //no predicate evaluated to true
+                } if(val != undefined) {
+                    return res;
+                }
+
             } else  {
                 // nothing special then..
                 return jscm_eval(last_expr, env);
