@@ -300,11 +300,6 @@ var Util = new (Class.create({
                 env.extend(e[1], new Box(Util.arrayToList(args)));
                 return env;
             }
-            // proc = function(args) {
-            //     env = env.extension();
-            //     env.extend(e[1], new Box(Util.arrayToList(args)));
-            //     return jscm_beglis(body, env);
-            // };
         } else if (Object.isArray(e[1])) {
 
             var formals = e[1];
@@ -344,19 +339,6 @@ var Util = new (Class.create({
                     return env;
                 }
 
-                // proc = function(args) {
-                //     env = env.extension();
-                //     if (args.length < formals.length)
-                //         throw IllegalArgumentCountError(errorName, 'at least',
-                //                                         formals.length, args.length);
-                //     var bargs = [];
-                //     for (var i = 0; i < formals.length; i++) {
-                //         bargs[i] = new Box(args[i]);
-                //     }
-                //     env.multiExtend(formals, bargs);
-                //     env.extend(listArgName, new Box(Util.arrayToList(args.slice(formals.length))));
-                //     return jscm_beglis(body, env);
-                // };
             }
             else {
                 extend_env = function(args, env) {
@@ -372,18 +354,6 @@ var Util = new (Class.create({
                     return env;
                 };
 
-                // proc = function(args) {
-                //     env = env.extension();
-                //     if (formals.length != args.length)
-                //         throw IllegalArgumentCountError(errorName, 'exactly',
-                //                                         formals.length, args.length);
-                //     var bargs = [];
-                //     for (var i = 0; i < args.length; i++) {
-                //         bargs[i] = new Box(args[i]);
-                //     }
-                //     env.multiExtend(formals, bargs);
-                //     return jscm_beglis(body, env);
-                // };
             }
 
         }
@@ -954,7 +924,7 @@ var Actions = {
         }
     },
     CONST: function(expr, env) {
-        var exprl = expr.toLowerCase();
+        // var exprl = expr.toLowerCase();
         if (Util.isNumberString(expr)) {
             return Util.getNumber(expr);
         } else if (Util.isNumber(expr)) {
@@ -963,6 +933,8 @@ var Actions = {
             return Util.getString(expr);
         } else if (Util.isCharacter(expr)) {
             return new SchemeChar(expr[2]);
+        } else if (Util.isNull(expr)) {
+            return [];
         } else {
             throw new JSError(expr + " not recognized as CONST", "Value");
         }
@@ -1128,6 +1100,13 @@ var ReservedSymbolTable = new Hash({
         return args[0].body;
     }),
 
+    'boolean?' : new Builtin('boolean?', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('boolean?', 'exactly', 1, args.length);
+        else
+            return (args[0]===true || args[0]===false);
+    }, 'boolean? DOC', 'x'),
+
     'procedure-body': new Builtin('procedure-body', function(args) {
         if (args.length != 1)
             return undefined;
@@ -1217,6 +1196,12 @@ var ReservedSymbolTable = new Hash({
         }
     },'<p>Returns the contents of the cdr field of <em>pair</em>.</p>' +
                        '<p>Note: it is an error to take the cdr of the empty list.</p>', 'pair'),
+    'char?' : new Builtin('char?', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('char?', 'exactly', 1, args.length);
+        else
+            return (args[0] instanceof SchemeChar);
+    }, 'char? DOC', 'x'),
     'clear-console': new Builtin('clear-console', function(args) {
         var divs = $$('#' + Document.CONSOLE + ' > div');
         for (var i = 0; i < divs.length; i++) {
@@ -1239,7 +1224,6 @@ var ReservedSymbolTable = new Hash({
                 } else {
                     return val;
                 }
-                //                return jscm_eval(lines[i][1], env);
             }
         }
         return undefined;
@@ -1253,11 +1237,7 @@ var ReservedSymbolTable = new Hash({
             throw IllegalArgumentCountError('cons', 'exactly', 2, args.length);
 
         return new Pair(args[0], args[1]);
-        // if (Util.isAtom(args[1])) {
-        //     return new Pair(args[0], args[1]);
-        // } else {
-        //     return Util.cons(args[0], args[1]);
-        // }
+
     }, 'Returns a newly allocated pair whose car is <em>obj<sub>1</sub></em> ' +
                         'and whose cdr is <em>obj<sub>2</sub></em>.',
                         'obj<sub>1</sub> obj<sub>2</sub>'),
@@ -1345,7 +1325,7 @@ var ReservedSymbolTable = new Hash({
                 jscm_printDisplay(fmt);
             }
         }
-    }, 'Prints <em>obj</em>.', 'obj'),
+    }, 'Displays <em>obj</em>.', 'obj'),
     'display-built-ins': new Builtin('display-built-ins', function(args) {
         throw new Escape(jscm_printBuiltinsHelp, [args]);
     }, 'Displays the list of built-in procedures.'),
@@ -2117,6 +2097,12 @@ var ReservedSymbolTable = new Hash({
         Util.validateNumberArg('tan', args);
         return Math.tan(args[0]);
     }, 'Returns the tangent (in radians) of <em>z</em>.', 'z'),
+    'vector?' : new Builtin('vector?', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('vector?', 'exactly', 1, args.length);
+        else
+            return (args[0] instanceof Vector);
+    }, 'string? DOC', 'x'),
     'zero?': new Builtin('zero?', function(args) {
         Util.validateNumberArg('zero?', args);
         return args[0] === 0;
@@ -2465,6 +2451,16 @@ var ReservedSymbolTable = new Hash({
         return new JSString(v.substring(args[1], args[2]));
     }),
 
+    'write': new Builtin('write', function(args) {
+        if (args.length != 1) {
+            throw IllegalArgumentCountError('write', 'exactly', 1, args.length);
+        } else {
+            var fmt = Util.format(args[0]);
+            jscm_printDisplay(fmt);
+
+        }
+    }, 'Prints <em>obj</em>.', 'obj'),
+
     'char->integer' : new Builtin('string-ref', function(args) {
         if(args.length != 1)
             throw IllegalArgumentCountError('char->integer', 'exactly', 1, args.length);
@@ -2692,7 +2688,6 @@ function jscm_repl() {
                 } else {
                     // jscm_print(e);
                     res.push(jscm_result_string_array(e));
-                    //                    res += jscm_result_string(e);
                 }
             }
         }
@@ -2843,12 +2838,13 @@ function jscm_evlis(arglis, env) {
 }
 
 function jscm_expressionToAction(expr) {
-    if (Util.isAtom(expr)) {
+    if (Util.isAtom(expr) || Util.isNull(expr)) {
         if (Util.isSymbol(expr))
             expr = expr.toLowerCase();
 
         if (Util.isNumberString(expr) || Util.isString(expr) ||
-            Util.isCharacter(expr) || Util.isNumber(expr)) {
+            Util.isCharacter(expr) || Util.isNumber(expr) ||
+            Util.isNull(expr)) {
             return Actions.CONST;
         } else {
             return Actions.IDENTIFIER;
@@ -3179,7 +3175,6 @@ window.onload = function() {
     REPL = new Interpreter();
 
     // put in the extra scheme =D
-    //    jscm_parse_eval(extraScm);
     jscm_load_file('scheme-lib/berkeley_simply.scm')
 
     $(Document.INPUT).onkeydown = jscm_onkeydown;
