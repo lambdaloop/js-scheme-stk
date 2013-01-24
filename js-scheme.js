@@ -291,14 +291,20 @@ var Util = new (Class.create({
 
     makeProcedure: function(errorName, e, env) {
         var proc = undefined;
+        var extend_env = undefined;
         var body = e.slice(2);
 
         if (Util.isAtom(e[1])) {
-            proc = function(args) {
+            extend_env = function (args, env) {
                 env = env.extension();
                 env.extend(e[1], new Box(Util.arrayToList(args)));
-                return jscm_beglis(body, env);
-            };
+                return env;
+            }
+            // proc = function(args) {
+            //     env = env.extension();
+            //     env.extend(e[1], new Box(Util.arrayToList(args)));
+            //     return jscm_beglis(body, env);
+            // };
         } else if (Object.isArray(e[1])) {
 
             var formals = e[1];
@@ -324,7 +330,7 @@ var Util = new (Class.create({
                 var listArgName = formals[formals.length-1];
                 formals.length = formals.length - 2;
 
-                proc = function(args) {
+                extend_env = function(args, env) {
                     env = env.extension();
                     if (args.length < formals.length)
                         throw IllegalArgumentCountError(errorName, 'at least',
@@ -335,11 +341,25 @@ var Util = new (Class.create({
                     }
                     env.multiExtend(formals, bargs);
                     env.extend(listArgName, new Box(Util.arrayToList(args.slice(formals.length))));
-                    return jscm_beglis(body, env);
-                };
+                    return env;
+                }
+
+                // proc = function(args) {
+                //     env = env.extension();
+                //     if (args.length < formals.length)
+                //         throw IllegalArgumentCountError(errorName, 'at least',
+                //                                         formals.length, args.length);
+                //     var bargs = [];
+                //     for (var i = 0; i < formals.length; i++) {
+                //         bargs[i] = new Box(args[i]);
+                //     }
+                //     env.multiExtend(formals, bargs);
+                //     env.extend(listArgName, new Box(Util.arrayToList(args.slice(formals.length))));
+                //     return jscm_beglis(body, env);
+                // };
             }
             else {
-                proc = function(args) {
+                extend_env = function(args, env) {
                     env = env.extension();
                     if (formals.length != args.length)
                         throw IllegalArgumentCountError(errorName, 'exactly',
@@ -349,13 +369,36 @@ var Util = new (Class.create({
                         bargs[i] = new Box(args[i]);
                     }
                     env.multiExtend(formals, bargs);
-                    return jscm_beglis(body, env);
+                    return env;
                 };
+
+                // proc = function(args) {
+                //     env = env.extension();
+                //     if (formals.length != args.length)
+                //         throw IllegalArgumentCountError(errorName, 'exactly',
+                //                                         formals.length, args.length);
+                //     var bargs = [];
+                //     for (var i = 0; i < args.length; i++) {
+                //         bargs[i] = new Box(args[i]);
+                //     }
+                //     env.multiExtend(formals, bargs);
+                //     return jscm_beglis(body, env);
+                // };
             }
 
         }
+
+        proc = function(args) {
+            env2 = extend_env(args, env);
+            return jscm_beglis(body, env2);
+        }
+
+
         p = new Proc('', proc);
+        p.raw_body = body;
         p.body = Util.convertToExternal(e);
+        p.extend_env = extend_env;
+
         return p;
     },
 
@@ -1187,10 +1230,15 @@ var ReservedSymbolTable = new Hash({
     }, 'Clears the console display area.'),
     'cond': new SpecialForm('cond', function(e, env) {
         var lines = Util.cdr(e);
+        var val = undefined;
         for (var i = 0; i < lines.length; i++) {
-            if (jscm_eval(lines[i][0], env)) {
-
-                return jscm_beglis(lines[i].slice(1), env);
+            val = jscm_eval(lines[i][0], env);
+            if (val != false) {
+                if(lines[i].length > 1) {
+                    return jscm_beglis(lines[i].slice(1), env);
+                } else {
+                    return val;
+                }
                 //                return jscm_eval(lines[i][1], env);
             }
         }
@@ -1970,7 +2018,7 @@ var ReservedSymbolTable = new Hash({
             return Math.floor((Math.random()*args[0]));
 
     }, 'Given no arguments, returns a pseudo-random real in the range [0,1). With one argument n, returns a pseudo-random integer in [0,n)'),
-        'remainder': new Builtin('quotient', function(args) {
+    'remainder': new Builtin('quotient', function(args) {
         if(args.length != 2)
             throw IllegalArgumentCountError('remainder', 'exactly', 2, args.length);
 
@@ -2719,10 +2767,60 @@ function jscm_eval(expr, env) {
 }
 
 function jscm_beglis(es, env) {
-    for (var i = 0; i < es.length - 1; i++) {
-        jscm_eval(es[i], env);
+    var prev_proc = undefined;
+    while(true) {
+        for (var i = 0; i < es.length - 1; i++) {
+            jscm_eval(es[i], env);
+        }
+
+        //    return jscm_eval(es[es.length - 1], env);
+        var last_expr = es[es.length - 1];
+        var action = jscm_expressionToAction(last_expr);
+        if(action == Actions.APPLICATION) {
+            var proc = jscm_eval(Util.car(last_expr), env);
+            if(proc instanceof Proc) {
+                // optimize tail call
+                var args = jscm_evlis(Util.cdr(last_expr), env);
+                if(prev_proc == proc) {
+                    env = env.parent;
+                }
+                env = proc.extend_env(args, env);
+                es = proc.raw_body;
+                prev_proc = proc;
+                continue;
+            } else if (proc instanceof SpecialForm && proc.name=="if") {
+                var args = Util.cdr(last_expr);
+                if(jscm_eval(args[0], env)) {
+                    es = [args[1]];
+                } else if (args.length < 3) {
+                    return undefined;
+                } else {
+                    es = [args[2]];
+                }
+            } else if (proc instanceof SpecialForm && proc.name == "cond") {
+                var lines = Util.cdr(last_expr);
+                var val = undefined;
+                for (var j = 0; j < lines.length; j++) {
+                    val = jscm_eval(lines[i][0], env);
+                    if (val != false) {
+                        if(lines[i].length > 1) {
+                            es = lines[i].slice(1);
+                            break;
+                        } else {
+                            return val;
+                        }
+                    }
+                }
+                return undefined;
+            } else  {
+                // nothing special then..
+                return jscm_eval(last_expr, env);
+            }
+
+        } else {
+            return jscm_eval(last_expr, env);
+        }
     }
-    return jscm_eval(es[es.length - 1], env);
 }
 
 function jscm_evlis(arglis, env) {
