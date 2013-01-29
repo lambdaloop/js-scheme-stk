@@ -1370,7 +1370,7 @@ var ReservedSymbolTable = new Hash({
         } else if (Util.isNull(args[1])) {
             return false;
         } else {
-            return args[0] == args[1];
+            return args[0] === args[1];
         }
     }, '<p>Returns #t if <em>obj<sub>1</sub></em> is "equal" to ' +
                        '<em>obj<sub>2</sub></em>.</p><p>This is currently determined using the' +
@@ -1381,16 +1381,21 @@ var ReservedSymbolTable = new Hash({
             throw IllegalArgumentCountError('equal?', 'exactly', 2, args.length);
         }
         var equal = function(obj1, obj2) {
-            if (obj1 instanceof JSString) {
-                obj1 = obj1.string;
-            } else if (obj2 instanceof JSString) {
-                obj2 = obj2.string;
-            }
             if (Util.isNull(obj1) && Util.isNull(obj2)) {
                 return true;
-            } else if (Util.isAtom(obj1) && Util.isAtom(obj2)) {
-                return obj1 == obj2;
-            } else {
+            } else if (obj1 instanceof Pair && obj2 instanceof Pair) {
+                while(!Util.isNull(obj1) && !Util.isNull(obj2)) {
+                    if(!equal(obj1.car, obj2.car)) {
+                        return false;
+                    } else {
+                        obj1 = obj1.cdr;
+                        obj2 = obj2.cdr;
+                    }
+                }
+                return Util.isNull(obj1) && Util.isNull(obj2);
+            } else if(obj1 instanceof Vector && obj2 instanceof Vector) {
+                obj1 = obj1.vector;
+                obj2 = obj2.vector;
                 if (obj1.length == obj2.length) {
                     for (var i = 0; i < obj1.length; i++) {
                         if (!equal(obj1[i], obj2[i])) {
@@ -1401,7 +1406,17 @@ var ReservedSymbolTable = new Hash({
                 } else {
                     return false;
                 }
+            } else if(obj1 instanceof SchemeChar && obj2 instanceof SchemeChar) {
+                return obj1.c === obj2.c;
+            } else if(obj1 instanceof JSString && obj2 instanceof JSString) {
+                return obj1.string === obj2.string;
+            } else {
+                //fall bock to ===
+                return obj1 === obj2;
             }
+
+
+
         };
         return equal(args[0], args[1]);
     }, 'Returns #t if <em>obj<sub1</sub></em> is equal to <em>obj<sub>2</sub>' +
@@ -1525,7 +1540,8 @@ var ReservedSymbolTable = new Hash({
     'length': new Builtin('length', function(args) {
         if (args.length != 1)
             throw IllegalArgumentCountError('length', 'exactly', 1, args.length);
-        if (!(args[0] instanceof Pair) || !(args[0].isNullTerminated()))
+        if (!((args[0] instanceof Pair && args[0].isNullTerminated())
+              || Util.isNull(args[0])))
             throw IllegalArgumentTypeError('length', args[0], 1);
 
         var len = 0;
