@@ -295,7 +295,7 @@ var Util = new (Class.create({
         var body = e.slice(2);
 
         if (Util.isAtom(e[1])) {
-            extend_env = function (args, env) {
+            extend_env = function (args) {
                 env = env.extension();
                 env.extend(e[1], new Box(Util.arrayToList(args)));
                 return env;
@@ -325,7 +325,7 @@ var Util = new (Class.create({
                 var listArgName = formals[formals.length-1];
                 formals.length = formals.length - 2;
 
-                extend_env = function(args, env) {
+                extend_env = function(args) {
                     env = env.extension();
                     if (args.length < formals.length)
                         throw IllegalArgumentCountError(errorName, 'at least',
@@ -341,7 +341,7 @@ var Util = new (Class.create({
 
             }
             else {
-                extend_env = function(args, env) {
+                extend_env = function(args) {
                     env = env.extension();
                     if (formals.length != args.length)
                         throw IllegalArgumentCountError(errorName, 'exactly',
@@ -359,7 +359,7 @@ var Util = new (Class.create({
         }
 
         proc = function(args) {
-            env2 = extend_env(args, env);
+            env2 = extend_env(args);
             return jscm_beglis(body, env2);
         }
 
@@ -2826,7 +2826,7 @@ function jscm_beglis(es, env) {
                 if(prev_proc == proc) {
                     env = env.parent;
                 }
-                env = proc.extend_env(args, env);
+                env = proc.extend_env(args);
                 es = proc.raw_body;
                 prev_proc = proc;
                 continue;
@@ -2840,6 +2840,7 @@ function jscm_beglis(es, env) {
                     es = [args[2]];
                 }
             } else if (proc instanceof SpecialForm && proc.name == "cond") {
+
                 var lines = Util.cdr(last_expr);
                 var val = false;
 
