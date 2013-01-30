@@ -2396,7 +2396,7 @@ var ReservedSymbolTable = new Hash({
         if (!(args[2] instanceof SchemeChar))
             throw IllegalArgumentTypeError('string-set!', args[2], 2);
 
-        if(args[1] < 0 || args[1] >= v.length)
+        if(args[1] < 0 || args[1] >= args[0].string.length)
             throw IllegalArgumentError("string-set!: index "+args[1]+" is out of range")
 
         args[0].setChar(args[1], args[2].c);
