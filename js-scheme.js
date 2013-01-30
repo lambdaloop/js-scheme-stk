@@ -511,9 +511,16 @@ var SchemeChar = Class.create({
 var JSString = Class.create({
     initialize: function(string) {
         this.string = string;
+        this.array = string.split("");
     },
     toString: function() {
         return this.string;
+    },
+    setChar: function(index, c) {
+        // set char at index to c
+        // not very efficient, but it works...
+        this.array[index] = c;
+        this.string = this.array.join("");
     }
 });
 
@@ -2358,18 +2365,31 @@ var ReservedSymbolTable = new Hash({
         if (args.length != 1)
             throw IllegalArgumentCountError('string-length', 'exactly', 1, args.length);
         if (!(args[0] instanceof JSString))
-            throw IllegalArgumentTypeError('string-length', ans, 1);
+            throw IllegalArgumentTypeError('string-length', args[0], 1);
         return args[0].string.length;
     }),
     "string-ref" : new Builtin("string-ref", function(args) {
         if (args.length != 2)
             throw IllegalArgumentCountError('string->symbol', 'exactly', 1, args.length);
         if (!(args[0] instanceof JSString))
-            throw IllegalArgumentTypeError('string-ref', ans, 1);
+            throw IllegalArgumentTypeError('string-ref', args[0], 1);
         if (!Util.isNumber(args[1]))
-            throw IllegalArgumentTypeError('string-ref', ans, 2);
+            throw IllegalArgumentTypeError('string-ref', args[1], 2);
 
         return (args[0].string)[args[1]];
+    }),
+    'string-set!' : new Builtin("string-set!", function(args) {
+        if (args.length != 3)
+            throw IllegalArgumentTypeError('string-set!', 'exactly', 3, args.length);
+        if (!(args[0] instanceof JSString))
+            throw IllegalArgumentTypeError('string-set!', args[0], 1);
+        if (!Util.isNumber(args[1]))
+            throw IllegalArgumentTypeError('string-set!', args[1], 2);
+        if (!(args[2] instanceof SchemeChar))
+            throw IllegalArgumentTypeError('string-set!', args[2], 2);
+
+        args[0].setChar(args[1], args[2].c);
+        return undefined;
     }),
     'make-vector' : new Builtin('make-vector', function(args) {
         if(args.length != 1 && args.length != 2)
