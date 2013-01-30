@@ -2222,6 +2222,14 @@ var ReservedSymbolTable = new Hash({
         else
             return (args[0] instanceof JSString);
     }, 'string? DOC', 'x'),
+    'string-null?' : new Builtin('string-null?', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('string?', 'exactly', 1, args.length);
+        if(!(args[0] instanceof JSString))
+            throw IllegalArgumentTypeError('string-set!' ,args[0], 1);
+
+        return args[0].string === "";
+    }, 'string-null? DOC', 'x'),
     "string-append" : new Builtin("string-append", function(args) {
         var res = "";
         for(var i=0; i<args.length; i++) {
@@ -2387,6 +2395,9 @@ var ReservedSymbolTable = new Hash({
             throw IllegalArgumentTypeError('string-set!', args[1], 2);
         if (!(args[2] instanceof SchemeChar))
             throw IllegalArgumentTypeError('string-set!', args[2], 2);
+
+        if(args[1] < 0 || args[1] >= v.length)
+            throw IllegalArgumentError("string-set!: index "+args[1]+" is out of range")
 
         args[0].setChar(args[1], args[2].c);
         return undefined;
