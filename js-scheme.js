@@ -1253,8 +1253,8 @@ var ReservedSymbolTable = new Hash({
         return Math.cos(args[0]);
     }, 'Returns the cosine (in radians) of <em>z</em>.', 'z'),
     'define': new SpecialForm('define', function(e, env) {
-        if (e.length < 2) {
-            throw new JSError(Util.format(e), "Ill-formed special form", false);
+        if (e.length <= 2) {
+            throw new JSError(Util.convertToExternal(e), "Ill-formed special form", false);
         }
         var name = e[1];
         if (Util.isAtom(name)) {
@@ -1262,28 +1262,13 @@ var ReservedSymbolTable = new Hash({
             if (!Util.isIdentifier(name)) {
                 throw new JSWarning(name + ' may not be defined.');
             } else if (ReservedSymbolTable.get(name) != undefined) {
-                if (e.length == 2) {
-                    ReservedSymbolTable.set(name, 0);
-                    return name;
-                } else {
-                    var val = jscm_eval(e[2], env);
-                    ReservedSymbolTable.set(name, val);
-                    return name;
-                }
+                var val = jscm_eval(e[2], env);
+                ReservedSymbolTable.set(name, val);
+                return name;
             } else {
-                if (e.length == 2 || e.length >= 3) {
-                    if (e.length == 2) {
-                        env.extend(name, new Box(undefined));
-                        return name;
-                    } else {
-                        // var val = jscm_eval(e[2], env);
-                        var val = jscm_beglis(e.slice(2), env);
-                        env.extend(name, new Box(val));
-                        return name;
-                    }
-                } else {
-                    throw new JSError(Util.format(e), "Ill-formed special form", false);
-                }
+                var val = jscm_beglis(e.slice(2), env);
+                env.extend(name, new Box(val));
+                return name;
             }
         } else if (!Util.isNull(name)) {
             name = e[1][0].toLowerCase();
