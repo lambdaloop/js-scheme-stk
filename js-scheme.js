@@ -1277,7 +1277,7 @@ var ReservedSymbolTable = new Hash({
                         return name;
                     } else {
                         // var val = jscm_eval(e[2], env);
-                        var val = jscm_beglis(e.splice(2), env);
+                        var val = jscm_beglis(e.slice(2), env);
                         env.extend(name, new Box(val));
                         return name;
                     }
@@ -2810,6 +2810,7 @@ function jscm_eval(expr, env) {
 
 function jscm_beglis(es, env) {
     var prev_proc = undefined;
+
     while(true) {
         for (var i = 0; i < es.length - 1; i++) {
             jscm_eval(es[i], env);
@@ -2823,7 +2824,7 @@ function jscm_beglis(es, env) {
             if(proc instanceof Proc) {
                 // optimize tail call
                 var args = jscm_evlis(Util.cdr(last_expr), env);
-                if(prev_proc == proc) {
+                if(prev_proc != undefined && prev_proc == proc) {
                     env = env.parent;
                 }
                 env = proc.extend_env(args);
