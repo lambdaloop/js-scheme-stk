@@ -1273,7 +1273,7 @@ var ReservedSymbolTable = new Hash({
             } else {
                 if (e.length == 2 || e.length >= 3) {
                     if (e.length == 2) {
-                        env.extend(name, new Box(0));
+                        env.extend(name, new Box(undefined));
                         return name;
                     } else {
                         // var val = jscm_eval(e[2], env);
