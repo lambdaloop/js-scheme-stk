@@ -931,6 +931,7 @@ var Actions = {
         }
     },
     CONST: function(expr, env) {
+        console.log(expr);
         // var exprl = expr.toLowerCase();
         if (Util.isNumberString(expr)) {
             return Util.getNumber(expr);
@@ -2739,8 +2740,10 @@ function jscm_quote(expr) {
     {
         return Util.arrayToList(Util.map(jscm_quote, expr));
     }
-    else
-        return expr;
+    else {
+        //symbol
+        return expr.toLowerCase();
+    }
 }
 
 
@@ -2873,8 +2876,9 @@ function jscm_evlis(arglis, env) {
 
 function jscm_expressionToAction(expr) {
     if (Util.isAtom(expr) || Util.isNull(expr)) {
-        if (Util.isSymbol(expr))
+        if (Util.isSymbol(expr)) {
             expr = expr.toLowerCase();
+        }
 
         if (Util.isNumberString(expr) || Util.isString(expr) ||
             Util.isCharacter(expr) || Util.isNumber(expr) ||
