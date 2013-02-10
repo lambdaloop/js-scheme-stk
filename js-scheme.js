@@ -136,6 +136,16 @@ var Util = new (Class.create({
             typeof(expr) == "number" || this.isNumberString(expr);
     },
 
+    stringToWord : function(expr) {
+        if(this.isNumberString(expr)) {
+            return Util.getNumber(expr);
+        } else if(expr.toLowerCase() != expr) {
+            return new JSString(expr);
+        } else {
+            return expr;
+        }
+    },
+
     car: function(list) {
         return list[0];
     },
@@ -410,6 +420,8 @@ var Util = new (Class.create({
             return true;
         }
     },
+
+
     JSCMLibs: new Hash()
 }))();
 
@@ -2599,13 +2611,7 @@ var ReservedSymbolTable = new Hash({
         if(args[0].length < 1)
             throw IllegalArgumentTypeError('first', args[0], 1);
         else {
-            var c = args[0][0];
-            var i = "0123456789".indexOf(c);
-            if (i != -1) {
-                return i;
-            } else {
-                return c;
-            }
+            return Util.stringToWord(args[0][0]);
         }
     }),
 
@@ -2626,12 +2632,7 @@ var ReservedSymbolTable = new Hash({
         else if(args[0].length == 1)
             return new JSString("");
         else {
-            args[0] = args[0].slice(1);
-
-            if(Util.isNumberString(args[0]))
-                args[0] = Util.getNumber(args[0]);
-
-            return args[0];
+            return Util.stringToWord(args[0].slice(1));
         }
     }),
 
@@ -2663,12 +2664,7 @@ var ReservedSymbolTable = new Hash({
         else if(args[0].length == 1)
             return new JSString("");
         else {
-            args[0] = args[0].slice(0, arg[0].length-1);
-
-            if(Util.isNumberString(args[0]))
-                args[0] = Util.getNumber(args[0]);
-
-            return args[0];
+            return Util.stringToWord(args[0].slice(0, arg[0].length-1));
         }
     }),
 
@@ -2692,12 +2688,7 @@ var ReservedSymbolTable = new Hash({
         if(args[0].length < 1)
             throw IllegalArgumentTypeError('last', args[0], 1);
         else {
-            args[0] = args[0][arg[0].length-1];
-
-            if(Util.isNumberString(args[0]))
-                args[0] = Util.getNumber(args[0]);
-
-            return args[0];
+            return Util.stringToWord(args[0][arg[0].length-1]);
         }
     }),
 
@@ -2710,10 +2701,7 @@ var ReservedSymbolTable = new Hash({
 
         args[0] = args[0] + ''; // to (javascript) string
 
-        if(Util.isNumberString(args[0]))
-            args[0] = Util.getNumber(args[0]);
-
-        return args[0];
+        return Util.stringToWord(args[0]);
     }),
 
     'word' : new Builtin("word", function(args) {
@@ -2727,10 +2715,7 @@ var ReservedSymbolTable = new Hash({
                 res += args[i];
         }
 
-        if(Util.isNumberString(res))
-            res = Util.getNumber(res);
-
-        return res;
+        return Util.stringToWord(res);
     })
 });
 
