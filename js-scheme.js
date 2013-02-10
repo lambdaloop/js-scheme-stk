@@ -120,13 +120,20 @@ var Util = new (Class.create({
 
     isSymbol: function(expr) {
         return this.isAtom(expr) &&
-            !this.isString(expr) && !this.isNumberString(expr);
+            !this.isString(expr) && !this.isNumberString(expr) &&
+            typeof(expr) != "boolean";
     },
 
     isSelfEvaluating: function(expr) {
         return !Object.isArray(expr) &&
             (this.isString(expr) || this.isCharacter(expr) ||
              this.isNumberString(expr) || this.isNumber(expr));
+    },
+
+    // special simply scheme function
+    isWord : function(expr) {
+        return typeof(expr) == "string" || (expr instanceof JSString) ||
+            typeof(expr) == "number" || this.isNumberString(expr);
     },
 
     car: function(list) {
@@ -931,7 +938,6 @@ var Actions = {
         }
     },
     CONST: function(expr, env) {
-        console.log(expr);
         // var exprl = expr.toLowerCase();
         if (Util.isNumberString(expr)) {
             return Util.getNumber(expr);
@@ -2349,6 +2355,8 @@ var ReservedSymbolTable = new Hash({
         {
             if(args[i] instanceof SchemeChar) {
                 ans += args[i].c
+            } else if(typeof(args[i]) == "boolean") {
+                ans += (args[i] ? "#t" : "#f");
             } else {
                 ans += args[i];
             }
@@ -2569,6 +2577,161 @@ var ReservedSymbolTable = new Hash({
         return "done";
     }),
 
+
+    'word?' : new Builtin('word?', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('word?', 'exactly', 1, args.length);
+        return Util.isWord(args[0]);
+    }),
+
+    'first' : new Builtin('first', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('first', 'exactly', 1, args.length);
+        if (!Util.isWord(args[0]) && !(args[0] instanceof Pair)) {
+            throw IllegalArgumentTypeError('first', args[0], 1);
+        }
+
+        if(args[0] instanceof Pair)
+            return args[0].car;
+
+        args[0] = args[0] + ''; // to string
+
+        if(args[0].length < 1)
+            throw IllegalArgumentTypeError('first', args[0], 1);
+        else {
+            var c = args[0][0];
+            var i = "0123456789".indexOf(c);
+            if (i != -1) {
+                return i;
+            } else {
+                return c;
+            }
+        }
+    }),
+
+    'bf' : new Builtin('bf', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('butfirst', 'exactly', 1, args.length);
+        if (!Util.isWord(args[0]) && !(args[0] instanceof Pair)) {
+            throw IllegalArgumentTypeError('butfirst', args[0], 1);
+        }
+
+        if(args[0] instanceof Pair)
+            return args[0].cdr;
+
+        args[0] = args[0] + ''; // to string
+
+        if(args[0].length < 1)
+            throw IllegalArgumentTypeError('butfirst', args[0], 1);
+        else if(args[0].length == 1)
+            return new JSString("");
+        else {
+            args[0] = args[0].slice(1);
+
+            if(Util.isNumberString(args[0]))
+                args[0] = Util.getNumber(args[0]);
+
+            return args[0];
+        }
+    }),
+
+    'bl' : new Builtin('bl', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('butlast', 'exactly', 1, args.length);
+        if (!Util.isWord(args[0]) && !(args[0] instanceof Pair)) {
+            throw IllegalArgumentTypeError('butlast', args[0], 1);
+        }
+
+        if(curr instanceof Pair) {
+            var curr = args[0];
+            var l = [];
+            while(curr.cdr instanceof Pair) {
+                l.push(curr.car);
+                curr = curr.cdr;
+            }
+            var res = [];
+            while(l.length > 0) {
+                res = new Pair(l.pop(), res);
+            }
+            return res;
+        }
+
+        args[0] = args[0] + ''; // to string
+
+        if(args[0].length < 1)
+            throw IllegalArgumentTypeError('butlast', args[0], 1);
+        else if(args[0].length == 1)
+            return new JSString("");
+        else {
+            args[0] = args[0].slice(0, arg[0].length-1);
+
+            if(Util.isNumberString(args[0]))
+                args[0] = Util.getNumber(args[0]);
+
+            return args[0];
+        }
+    }),
+
+    'last' : new Builtin('last', function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('last', 'exactly', 1, args.length);
+        if (!Util.isWord(args[0]) && !(args[0] instanceof Pair)) {
+            throw IllegalArgumentTypeError('last', args[0], 1);
+        }
+
+        if(curr instanceof Pair) {
+            var curr = args[0];
+            while(curr.cdr instanceof Pair) {
+                curr = curr.cdr;
+            }
+            return curr.car;
+        }
+
+        args[0] = args[0] + ''; // to string
+
+        if(args[0].length < 1)
+            throw IllegalArgumentTypeError('last', args[0], 1);
+        else {
+            args[0] = args[0][arg[0].length-1];
+
+            if(Util.isNumberString(args[0]))
+                args[0] = Util.getNumber(args[0]);
+
+            return args[0];
+        }
+    }),
+
+    "string->word" : new Builtin("string->word", function(args) {
+        if (args.length != 1)
+            throw IllegalArgumentCountError('string->word', 'exactly', 1, args.length);
+        if (!(args[0] instanceof JSString)) {
+            throw IllegalArgumentTypeError('string->word', args[0], 1);
+        }
+
+        args[0] = args[0] + ''; // to (javascript) string
+
+        if(Util.isNumberString(args[0]))
+            args[0] = Util.getNumber(args[0]);
+
+        return args[0];
+    }),
+
+    'word' : new Builtin("word", function(args) {
+
+        var res = "";
+
+        for (var i=0; i<args.length; i++) {
+            if (!Util.isWord(args[i]))
+                throw IllegalArgumentTypeError('word', args[0], 1);
+            else
+                res += args[i];
+        }
+
+        if(Util.isNumberString(res))
+            res = Util.getNumber(res);
+
+        return res;
+    })
 });
 
 // give the middle part of cxr stuff
@@ -2707,11 +2870,13 @@ function jscm_repl() {
             return false;
         }
 
+        var last_value = undefined;
         var res = [];
         for(var i=0; i<scm.length; i++)
         {
             try {
-                res.push(jscm_result_string_array(jscm_eval(scm[i], GlobalEnvironment)));
+                last_value = jscm_eval(scm[i], GlobalEnvironment);
+                res.push(jscm_result_string_array(last_value));
             } catch (e) {
                 if (e instanceof Escape) {
                     e.invoke();
@@ -2726,6 +2891,7 @@ function jscm_repl() {
         }
 
         jscm_printBlocks(res);
+        ReservedSymbolTable.set("_", last_value);
         REPL.reset();
     }
     return false;
