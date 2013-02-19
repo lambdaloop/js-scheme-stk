@@ -21,8 +21,8 @@ interpreter version 4.0.1-ucb1.3.6.
 *******************************************************************************/
 var JSScheme = {
     author: 'Erik Silkensen (with additions by Pierre Karashchuk)',
-    version: '0.4b STk-0.90',
-    date: 'February 10 2013'
+    version: '0.4b STk-0.91',
+    date: 'February 18 2013'
 };
 
 var  Document = {
@@ -1046,12 +1046,12 @@ var ReservedSymbolTable = new Hash({
                            '<p>Note: <b>#f</b> is the <u>only</u> false value in conditional ' +
                            'expressions.</p>', 'obj<sub>1</sub> . obj<sub>n</sub>'),
     'append': new Builtin('append', function(args) {
-        var res = [];
+
         if (args.length == 1) {
             return args[0];
         }
 
-        res = []
+        var res = [];
 
         for (var i = 0; i < args.length; i++) {
             if (!(Util.isNull(args[i]) ||
@@ -2710,12 +2710,38 @@ var ReservedSymbolTable = new Hash({
 
         for (var i=0; i<args.length; i++) {
             if (!Util.isWord(args[i]))
-                throw IllegalArgumentTypeError('word', args[0], 1);
+                throw IllegalArgumentTypeError('word', args[i], i+1);
             else
                 res += args[i];
         }
 
         return Util.stringToWord(res);
+    }),
+
+    'sentence' : new Builtin('sentence', function(args) {
+
+        var res = [];
+
+        for (var i=0; i<args.length; i++) {
+            if (!Util.isWord(args[i])
+                && !(args[i] instanceof Pair)
+                && !Util.isNull(args[i])) {
+                throw IllegalArgumentTypeError('sentence', args[i], i+1);
+            } else if (Util.isWord(args[i])){
+                res.push(args[i]);
+            } else { // sentence (represented as Pair)
+                var p = args[i];
+                while (p instanceof Pair) {
+                    if (!Util.isWord(p.car)) {
+                        throw IllegalArgumentTypeError('sentence', args[i], i+1);
+                    }
+                    res.push(p.car);
+                    p = p.cdr;
+                }
+            }
+        }
+
+        return Util.arrayToList(res);
     })
 });
 

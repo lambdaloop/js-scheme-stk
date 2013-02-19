@@ -445,34 +445,35 @@
 ;;                          (whoops "Invalid argument to WORD: " arg)))
 ;;                    x))))))
 
-(define se
-  (let ((pair? pair?)
-        (null? null?)
-        (word? word?)
-        (car car)
-        (cons cons)
-        (cdr cdr)
-        (whoops whoops))
-    (define (paranoid-append a original-a b)
-      (cond ((null? a) b)
-            ((word? (car a))
-             (cons (car a) (paranoid-append (cdr a) original-a b)))
-            (else (whoops "Argument to SENTENCE not a word or sentence"
-                          original-a ))))
-    (define (combine-two a b)                ;; Note: b is always a list
-      (cond ((pair? a) (paranoid-append a a b))
-            ((null? a) b)
-            ((word? a) (cons a b))
-            (else (whoops "Argument to SENTENCE not a word or sentence:" a))))
-    ;; Helper function so recursive calls don't show up in TRACE
-    (define (real-se args)
-      (if (null? args)
-          '()
-          (combine-two (car args) (real-se (cdr args)))))
-    (lambda args
-      (real-se args))))
+;; (define se
+;;   (let ((pair? pair?)
+;;         (null? null?)
+;;         (word? word?)
+;;         (car car)
+;;         (cons cons)
+;;         (cdr cdr)
+;;         (whoops whoops))
+;;     (define (paranoid-append a original-a b)
+;;       (cond ((null? a) b)
+;;             ((word? (car a))
+;;              (cons (car a) (paranoid-append (cdr a) original-a b)))
+;;             (else (whoops "Argument to SENTENCE not a word or sentence"
+;;                           original-a ))))
+;;     (define (combine-two a b)                ;; Note: b is always a list
+;;       (cond ((pair? a) (paranoid-append a a b))
+;;             ((null? a) b)
+;;             ((word? a) (cons a b))
+;;             (else (whoops "Argument to SENTENCE not a word or sentence:" a))))
+;;     ;; Helper function so recursive calls don't show up in TRACE
+;;     (define (real-se args)
+;;       (if (null? args)
+;;           '()
+;;           (combine-two (car args) (real-se (cdr args)))))
+;;     (lambda args
+;;       (real-se args))))
 
-(define sentence se)
+;; (define sentence se)
+(define se sentence)
 
 ;; (define first
 ;;   (let ((pair? pair?)
