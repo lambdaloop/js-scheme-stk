@@ -265,9 +265,15 @@ var Util = new (Class.create({
         }
         return res;
     },
-    mapCmp: function(op, args) {
+    mapCmp: function(op, args, func) {
+        if ((args.length > 0) && (!this.isNumber(args[0]))) {
+            throw IllegalArgumentTypeError(func, args[0], 1);
+        }
         for (var i = 1; i < args.length; i++) {
-            if (op(this.car(args), args[i])) {
+            if (!this.isNumber(args[i])) {
+                throw IllegalArgumentTypeError(func, args[i], i+1);
+            }
+            if (op(args[i-1], args[i])) {
                 return false;
             }
         }
@@ -421,6 +427,14 @@ var Util = new (Class.create({
         }
     },
 
+    validateNumberArgs: function(proc, args) {
+        for(var i=0; i<args.length; i++) {
+            if (!Util.isNumber(args[i])) {
+                throw IllegalArgumentTypeError(proc, args[i], i+1);
+            }
+        }
+        return true;
+    },
 
     JSCMLibs: new Hash()
 }))();
@@ -2135,25 +2149,25 @@ var ReservedSymbolTable = new Hash({
         return args[0] === 0;
     }, 'Returns #t if <em>number</em> is 0, and returns #f otherwise.', 'number'),
     '=': new Builtin('=', function(args) {
-        return Util.mapCmp(function(lhs, rhs) { return lhs != rhs; }, args);
+        return Util.mapCmp(function(lhs, rhs) { return lhs != rhs; }, args, '=');
     }, 'Returns #t if every argument is "equal," and returns #f otherwise. ' +
                      'Equality is determined using the JavaScript <strong>==</strong> operator.',
                      'obj<sub>1</sub> . obj<sub>n</sub>'),
     '<': new Builtin('<', function(args) {
-        return Util.mapCmp(function(lhs, rhs) { return lhs >= rhs; }, args);
+        return Util.mapCmp(function(lhs, rhs) { return lhs >= rhs; }, args, '<');
     }, 'Returns #t if the first argument is less than every other argument, and' +
                      ' returns #f otherwise.', 'number<sub>1</sub> . number<sub>n</sub>'),
     '>': new Builtin('>', function(args) {
-        return Util.mapCmp(function(lhs, rhs) { return lhs <= rhs; }, args);
+        return Util.mapCmp(function(lhs, rhs) { return lhs <= rhs; }, args, '>');
     }, 'Returns #t if the first argument is greater than every other argument, ' +
                      'and returns #f otherwise.', 'number<sub>1</sub> . number<sub>n</sub>'),
     '<=': new Builtin('<=', function(args) {
-        return Util.mapCmp(function(lhs, rhs) { return lhs > rhs; }, args);
+        return Util.mapCmp(function(lhs, rhs) { return lhs > rhs; }, args, '<=');
     }, 'Returns #t if the first argument is less than or equal to every other ' +
                       'argument, and returns #f otherwise.', 'number<sub>1</sub> . number<sub>' +
                       'n</sub>'),
     '>=': new Builtin('>=', function(args) {
-        return Util.mapCmp(function(lhs, rhs) { return lhs < rhs; }, args);
+        return Util.mapCmp(function(lhs, rhs) { return lhs < rhs; }, args, '>=');
     }, 'Returns #t if the first argument is greater than or equal to every ' +
                       'other argument, and returns #f otherwise.',
                       'number<sub>1</sub> . number<sub>n</sub>'),
