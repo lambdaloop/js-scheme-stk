@@ -2664,7 +2664,7 @@ var ReservedSymbolTable = new Hash({
         else if(args[0].length == 1)
             return new JSString("");
         else {
-            return Util.stringToWord(args[0].slice(0, arg[0].length-1));
+            return Util.stringToWord(args[0].slice(0, args[0].length-1));
         }
     }),
 
@@ -2688,7 +2688,7 @@ var ReservedSymbolTable = new Hash({
         if(args[0].length < 1)
             throw IllegalArgumentTypeError('last', args[0], 1);
         else {
-            return Util.stringToWord(args[0][arg[0].length-1]);
+            return Util.stringToWord(args[0][args[0].length-1]);
         }
     }),
 
