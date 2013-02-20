@@ -21,8 +21,8 @@ interpreter version 4.0.1-ucb1.3.6.
 *******************************************************************************/
 var JSScheme = {
     author: 'Erik Silkensen (with additions by Pierre Karashchuk)',
-    version: '0.4b STk-0.91',
-    date: 'February 18 2013'
+    version: '0.4b STk-0.92',
+    date: 'February 20 2013'
 };
 
 var  Document = {
