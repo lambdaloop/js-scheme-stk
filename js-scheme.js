@@ -2657,7 +2657,7 @@ var ReservedSymbolTable = new Hash({
             throw IllegalArgumentTypeError('butlast', args[0], 1);
         }
 
-        if(curr instanceof Pair) {
+        if(args[0] instanceof Pair) {
             var curr = args[0];
             var l = [];
             while(curr.cdr instanceof Pair) {
@@ -2689,7 +2689,7 @@ var ReservedSymbolTable = new Hash({
             throw IllegalArgumentTypeError('last', args[0], 1);
         }
 
-        if(curr instanceof Pair) {
+        if(args[0] instanceof Pair) {
             var curr = args[0];
             while(curr.cdr instanceof Pair) {
                 curr = curr.cdr;
