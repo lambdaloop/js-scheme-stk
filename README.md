@@ -1,6 +1,7 @@
 js-scheme-stk
 =============
 
-Extension of js-scheme (from http://code.google.com/p/js-scheme/) to add Berkeley Stk scheme functionality
+Extension of js-scheme (from http://code.google.com/p/js-scheme/) to add Berkeley STk scheme functionality
 
-You can try it out at https://dl.dropbox.com/u/16963685/js-scheme/index.html
+It is available at:
+http://inst.eecs.berkeley.edu/~cs61AS/sp13/js-scheme-stk/index.html
