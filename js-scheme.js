@@ -16,7 +16,7 @@
 ---
  JS-SCHEME-STK - An extension of JS-SCHEME to make it closer to the STk
 interpreter version 4.0.1-ucb1.3.6.
- (c) 2012 Pierre Karashchuk, pierre.k@berkeley.edu, version 0.4 Stk-0.6
+ (c) 2013 Pierre Karashchuk, pierre.k@berkeley.edu, version 0.4 Stk-1.0
 
 *******************************************************************************/
 var JSScheme = {
