@@ -7,6 +7,79 @@
 
 (define define-macro defmacro)
 
+(define (display-n-spaces n)
+  (if (<= n 0)
+      'ok
+      (begin
+        (display "..")
+        (display-n-spaces (1- n)))))
+
+(define (remove elt lst)
+  (cond ((null? lst) '())
+        ((equal? elt (car lst)) (remove elt (cdr lst)))
+        (else (cons (car lst) (remove elt (cdr lst))))))
+
+
+(define *trace-tabs* 0)
+(define *traced-procedures* (list))
+
+(define-macro (trace name)
+  (let ((val (eval name)))
+    (cond ((not (symbol? name))
+           (error "TRACE: argument is not symbol: " name))
+          ((not (or (procedure? val) (macro? val)))
+           (error "TRACE: argument value is not procedure or macro: " val))
+          ((memq name *traced-procedures*)
+           (display "Warning: " name " is already traced"))
+          (else (let ((old-val (gensym))
+                      (result (gensym)))
+                  `(begin
+                     (set! *traced-procedures*
+                           (cons (cons ',name ,name) *traced-procedures*))
+                     (set! ,name
+                           (let ((,old-val ,name)
+                                 (cons cons)
+                                 (+ +)
+                                 (display display)
+                                 (newline newline)
+                                 (display-n-spaces display-n-spaces))
+                             (lambda args
+                               (set! *trace-tabs* (+ *trace-tabs* 1))
+                               (display-n-spaces *trace-tabs*)
+                               (display (string " => " (cons ',name args)))
+                               (newline)
+                               (let ((,result (apply ,old-val args)))
+                                 (display-n-spaces *trace-tabs*)
+                                 (display (string " <=  " (cons ',name args) " returns " ,result))
+                                 (newline)
+
+                                 (set! *trace-tabs* (- *trace-tabs* 1))
+                                 ,result))))
+                     'alrighty))))))
+
+(define-macro (untrace name)
+  (let ((val (eval name)))
+    (cond ((not (symbol? name))
+           (error "UNTRACE: argument is not symbol: " name))
+          ((not (or (procedure? val) (macro? val)))
+           (error "UNTRACE: argument value is not procedure or macro: " val))
+          ((not (assoc name *traced-procedures*))
+           (display (string "Warning: " name " is not being traced")))
+          (else (let ((a (gensym)))
+                  `(begin
+                     (let ((,a (assoc ',name *traced-procedures*)))
+                       (set! ,name (cdr ,a))
+                       (remove ,a *traced-procedures*)
+                       'alrighty)))))))
+
+
+;; for testing
+(define (fib n)
+  (if (<= n 1)
+      1
+      (+ (fib (- n 1))
+         (fib (- n 2)))))
+
 ;;; === berkeley.scm === 4.03.01 Tue Jul 22 17:22:59 2003
 
 (define nil '())
@@ -665,7 +738,7 @@
             ((equal? key (car (car alist))) (car alist))
             (else (assoc key (cdr alist)))))))
 
-(define member assoc)
+;; (define member assoc)
 
 (define before?
   (let ((not not)
