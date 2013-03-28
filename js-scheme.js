@@ -21,8 +21,8 @@ interpreter version 4.0.1-ucb1.3.6.
 *******************************************************************************/
 var JSScheme = {
     author: 'Erik Silkensen (with additions by Pierre Karashchuk)',
-    version: '0.4b STk-0.92',
-    date: 'February 20 2013'
+    version: '0.4b STk-1.0',
+    date: 'March 28 2013'
 };
 
 var  Document = {
@@ -33,6 +33,10 @@ var  Document = {
     KEY_DOWN: 40,
     KEY_UP: 38
 };
+
+
+ITER_RECURSION_LIMIT = 3000;
+RECUR_RECURSION_LIMIT = 500;
 
 var Tokens = {
     AND: 'and',
@@ -199,6 +203,55 @@ var Util = new (Class.create({
     isNull: function(expr) {
         return Object.isArray(expr) && expr.length == 0;
     },
+
+    eq : function(a, b) {
+        if (Util.isNull(a)) {
+            return Util.isNull(b);
+        } else if (Util.isNull(b)) {
+            return false;
+        } else {
+            return a === b;
+        }
+    },
+
+    equal : function(obj1, obj2) {
+        if (Util.isNull(obj1) && Util.isNull(obj2)) {
+            return true;
+        } else if (obj1 instanceof Pair && obj2 instanceof Pair) {
+            while(!Util.isNull(obj1) && !Util.isNull(obj2)
+                  && obj1 instanceof Pair && obj2 instanceof Pair) {
+                if(!this.equal(obj1.car, obj2.car)) {
+                    return false;
+                } else {
+                    obj1 = obj1.cdr;
+                    obj2 = obj2.cdr;
+                }
+            }
+            return this.equal(obj1, obj2)
+        } else if(obj1 instanceof Vector && obj2 instanceof Vector) {
+            obj1 = obj1.vector;
+            obj2 = obj2.vector;
+            if (obj1.length == obj2.length) {
+                for (var i = 0; i < obj1.length; i++) {
+                    if (!this.equal(obj1[i], obj2[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return false;
+            }
+        } else if(obj1 instanceof SchemeChar && obj2 instanceof SchemeChar) {
+            return obj1.c === obj2.c;
+        } else if(obj1 instanceof JSString && obj2 instanceof JSString) {
+            return obj1.string === obj2.string;
+        } else {
+            //fall bock to ===
+            return obj1 === obj2;
+        }
+
+    },
+
     format: function(expr) {
         if (typeof expr == 'function') {
             return expr.name == "" ? '#<compound-procedure>' : expr.name;
@@ -396,7 +449,7 @@ var Util = new (Class.create({
     },
 
     convertToInternal : function(expr) {
-        if(typeof expr == 'string')
+        if(typeof expr == 'string' || expr instanceof JSString)
             return expr;
 
         if(expr instanceof Pair)
@@ -1357,11 +1410,12 @@ var ReservedSymbolTable = new Hash({
     'e': Math.E,
     'else': true,
     'error': new Builtin('error', function(args) {
-        if (args.length != 1) {
-            throw IllegalArgumentCountError('error', 'exactly', 1, args.length);
-        } else {
-            throw new JSError(Util.format(args[0]));
+        var res = "";
+        for(var i=0; i<args.length; i++) {
+            res += Util.format(args[i])
+            res += " ";
         }
+        throw new JSError(res);
     }, 'Raises an error, displaying the <em>message</em>.', 'message'),
     'eval': new SpecialForm('eval', function(e, env) {
         if (e.length != 2)
@@ -1369,8 +1423,7 @@ var ReservedSymbolTable = new Hash({
         var a = jscm_eval(e[1], env);
         args = Util.convertToInternal(a);
         if (Util.isAtom(args)) {
-            //            return jscm_eval(REPL.parser.parse(args), env);
-            return a;
+            return jscm_eval(a, env);
         } else if ((args instanceof Pair) && args.isNullTerminated()) {
             return jscm_eval(args, env);
         } else if (!Util.isNull(args)) {
@@ -1390,13 +1443,7 @@ var ReservedSymbolTable = new Hash({
     'eq?': new Builtin('eq?', function(args) {
         if (args.length != 2)
             throw IllegalArgumentCountError('eq?', 'exactly', 2, args.length);
-        if (Util.isNull(args[0])) {
-            return Util.isNull(args[1]);
-        } else if (Util.isNull(args[1])) {
-            return false;
-        } else {
-            return args[0] === args[1];
-        }
+        return Util.eq(args[0], args[1]);
     }, '<p>Returns #t if <em>obj<sub>1</sub></em> is "equal" to ' +
                        '<em>obj<sub>2</sub></em>.</p><p>This is currently determined using the' +
                        ' JavaScript <strong>===</strong> operator.</p>',
@@ -1405,45 +1452,7 @@ var ReservedSymbolTable = new Hash({
         if (args.length != 2) {
             throw IllegalArgumentCountError('equal?', 'exactly', 2, args.length);
         }
-        var equal = function(obj1, obj2) {
-            if (Util.isNull(obj1) && Util.isNull(obj2)) {
-                return true;
-            } else if (obj1 instanceof Pair && obj2 instanceof Pair) {
-                while(!Util.isNull(obj1) && !Util.isNull(obj2)) {
-                    if(!equal(obj1.car, obj2.car)) {
-                        return false;
-                    } else {
-                        obj1 = obj1.cdr;
-                        obj2 = obj2.cdr;
-                    }
-                }
-                return Util.isNull(obj1) && Util.isNull(obj2);
-            } else if(obj1 instanceof Vector && obj2 instanceof Vector) {
-                obj1 = obj1.vector;
-                obj2 = obj2.vector;
-                if (obj1.length == obj2.length) {
-                    for (var i = 0; i < obj1.length; i++) {
-                        if (!equal(obj1[i], obj2[i])) {
-                            return false;
-                        }
-                    }
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if(obj1 instanceof SchemeChar && obj2 instanceof SchemeChar) {
-                return obj1.c === obj2.c;
-            } else if(obj1 instanceof JSString && obj2 instanceof JSString) {
-                return obj1.string === obj2.string;
-            } else {
-                //fall bock to ===
-                return obj1 === obj2;
-            }
-
-
-
-        };
-        return equal(args[0], args[1]);
+        return Util.equal(args[0], args[1]);
     }, 'Returns #t if <em>obj<sub1</sub></em> is equal to <em>obj<sub>2</sub>' +
                           '</em>.  If the objects are lists, they will be compared recursively. ' +
                           'As a rule of thumb, if the objects display the same, they are probably ' +
@@ -1521,6 +1530,18 @@ var ReservedSymbolTable = new Hash({
                             '<em>list</em>s and returns a list of the results, in order.</p>' +
                             '<p><em>Proc</em> must be a function of as many arguments as there are ' +
                             'lists specified.</p>', 'proc list<sub>1</sub> . list<sub>n</sub>'),
+    'gensym' : new Builtin('gensym', function gensym (args) {
+        if(args.length != 0)
+            throw IllegalArgumentCountError('gensym', 'excatly', 0, args.length);
+        if (gensym.counter == undefined) {
+            gensym.counter = 0;
+        }
+        gensym.counter += 1;
+
+        return "()(" + gensym.counter + ")()"
+    }),
+
+
     'help': new Builtin('help', function(args) {
         throw new Escape(jscm_printHelp, [args]);
     }, 'Displays help information for JS-SCHEME.<p><em>Obj</em> may be an actual'+
@@ -1915,6 +1936,53 @@ var ReservedSymbolTable = new Hash({
                        '<em>list</em>s and returns a list of the results, in order.</p>' +
                        '<p><em>Proc</em> must be a function of as many arguments as there are ' +
                        'lists specified.</p>', 'proc list<sub>1</sub> . list<sub>n</sub>'),
+
+
+
+    'memq' : new Builtin('member', function(args) {
+        if (args.length != 2)
+            throw IllegalArgumentCountError('member', 'exactly', 2, args.length);
+
+        var val = args[0];
+        var p = args[1];
+        if (!(p instanceof Pair || Util.isNull(p))) {
+            throw IllegalArgumentTypeError('member', p, 2);
+        }
+
+        while(!Util.isNull(p)) {
+            if(Util.eq(p.car, val)) {
+                return p;
+            } else {
+                p = p.cdr;
+            }
+        }
+
+        return false;
+
+    }),
+
+    'member' : new Builtin('member', function(args) {
+        if (args.length != 2)
+            throw IllegalArgumentCountError('member', 'exactly', 2, args.length);
+
+        var val = args[0];
+        var p = args[1];
+        if (!(p instanceof Pair || Util.isNull(p))) {
+            throw IllegalArgumentTypeError('member', p, 2);
+        }
+
+        while(!Util.isNull(p)) {
+            if(Util.equal(p.car, val)) {
+                return p;
+            } else {
+                p = p.cdr;
+            }
+        }
+
+        return false;
+
+    }),
+
     'modulo': new Builtin('modulo', function(args) {
         if (args.length != 2) {
             throw IllegalArgumentCountError('modulo', 'exactly', 2, args.length);
@@ -2365,8 +2433,10 @@ var ReservedSymbolTable = new Hash({
         var s = "";
         for(var i=0; i<l.length; i++)
         {
-            if(args[i] instanceof SchemeChar) {
+            if(l[i] instanceof SchemeChar) {
                 ans += l[i].c
+            } else if(typeof(l[i]) == "boolean") {
+                ans += (l[i] ? "#t" : "#f");
             } else {
                 ans += l[i];
             }
@@ -2900,6 +2970,7 @@ function jscm_repl() {
         for(var i=0; i<scm.length; i++)
         {
             try {
+                jscm_eval.depth = 0;
                 last_value = jscm_eval(scm[i], GlobalEnvironment);
                 res.push(jscm_result_string_array(last_value));
             } catch (e) {
@@ -2974,7 +3045,13 @@ function jscm_eval(expr, env) {
     try {
         var action = jscm_expressionToAction(expr);
         if (typeof action == 'function') {
-            return action(expr, env);
+            jscm_eval.depth += 1;
+            var value = action(expr, env);
+            jscm_eval.depth -= 1;
+            if (jscm_eval.depth >= RECUR_RECURSION_LIMIT) {
+                throw new JSError("Normal recursion limit reached.")
+            }
+            return value;
         } else {
             throw new TypeError('The object ' + Util.format(action) +
                                 ' is not applicable.');
@@ -2990,6 +3067,8 @@ function jscm_eval(expr, env) {
 function jscm_beglis(es, env) {
     var prev_proc = undefined;
 
+    var depth = 0;
+
     while(true) {
         for (var i = 0; i < es.length - 1; i++) {
             jscm_eval(es[i], env);
@@ -2998,13 +3077,19 @@ function jscm_beglis(es, env) {
         //    return jscm_eval(es[es.length - 1], env);
         var last_expr = es[es.length - 1];
         var action = jscm_expressionToAction(last_expr);
+        depth += 1;
+
+        if (depth >= ITER_RECURSION_LIMIT) {
+            throw new JSError("Iterative recursion limit reached");
+        }
+
         if(action == Actions.APPLICATION) {
             var proc = jscm_eval(Util.car(last_expr), env);
             if(proc instanceof Proc) {
                 // optimize tail call
                 var args = jscm_evlis(Util.cdr(last_expr), env);
                 if(prev_proc != undefined && prev_proc == proc) {
-                    env = env.parent;
+                    env = env.parent; // crucial
                 }
                 env = proc.extend_env(args);
                 es = proc.raw_body;
@@ -3347,6 +3432,7 @@ function jscm_onkeydown(e) {
 function jscm_parse_eval(str) {
     var scm = REPL.parser.parse(str);
     for(var i=0; i<scm.length; i++) {
+        jscm_eval.depth = 0;
         jscm_eval(scm[i], GlobalEnvironment);
     }
 }
