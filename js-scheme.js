@@ -21,8 +21,8 @@ interpreter version 4.0.1-ucb1.3.6.
 *******************************************************************************/
 var JSScheme = {
     author: 'Erik Silkensen (with additions by Pierre Karashchuk)',
-    version: '0.4b STk-1.0',
-    date: 'March 28 2013'
+    version: '0.4b STk-1.01',
+    date: 'November 3 2013'
 };
 
 var  Document = {
@@ -642,10 +642,9 @@ var Promise = Class.create({
 });
 
 var Pair = Class.create({
-    initialize: function(car, cdr, parens) {
+    initialize: function(car, cdr) {
         this.car = car;
         this.cdr = cdr;
-        this.parens = parens === undefined ? true : parens;
     },
     isEmpty: function() {
         return this.car === undefined && this.cdr === undefined;
@@ -655,9 +654,9 @@ var Pair = Class.create({
             return true;
         } else if(this.cdr instanceof Pair) {
             return this.cdr.isNullTerminated();
-        } else if (Object.isArray(this.cdr) && this.cdr.length == 1 &&
-                   this.cdr[0] instanceof Pair) {
-            return this.cdr[0].isNullTerminated();
+            // } else if (Object.isArray(this.cdr) && this.cdr.length == 1 &&
+            //            this.cdr[0] instanceof Pair) {
+            //     return this.cdr[0].isNullTerminated();
         } else {
             return false;
         }
@@ -675,17 +674,15 @@ var Pair = Class.create({
 
             ans += Util.format(a.car);
             a = a.cdr;
+            if(!(a instanceof Pair || Util.isNull(a))) {
+                ans += ' . ' + Util.format(a)
+                break;
+            }
         }
-        //        return Util.format(this.car) + (Util.isNull(this.cdr) ? '' : ' ' +
-        //                                      Util.format(this.cdr[0]));
         return ans+")";
     },
     toString: function() {
-        if (this.isNullTerminated()) {
-            return this.toStringList();
-        }
-        return (this.parens ? '(' : '') + Util.format(this.car) + ' . ' +
-            Util.format(this.cdr) + (this.parens ? ')' : '');
+        return this.toStringList();
     }
 });
 
@@ -954,7 +951,7 @@ var Parser = Class.create({
         // if (next == Tokens.DOT) {
         //     throw ParseWarning("Ill-formed dotted list; car is undefined.");
         // }
-        var pair = new Pair(undefined, undefined, false);
+        var pair = new Pair(undefined, undefined);
         while (tokens.length > 0 && next != Tokens.R_PAREN) {
             // if (next != Tokens.DOT) {
             list.push(next);
@@ -1120,7 +1117,7 @@ var ReservedSymbolTable = new Hash({
 
         var res = [];
 
-        for (var i = 0; i < args.length; i++) {
+        for (var i = 0; i < args.length-1; i++) {
             if (!(Util.isNull(args[i]) ||
                   (args[i] instanceof Pair && args[i].isNullTerminated()))) {
                 throw IllegalArgumentTypeError('append', args[i], i+1);
@@ -1136,7 +1133,13 @@ var ReservedSymbolTable = new Hash({
             }
         }
 
-        return Util.arrayToList(res);
+        var x = Util.arrayToList(res);
+        var p = x;
+        while(p.cdr instanceof Pair) {
+            p = p.cdr;
+        }
+        p.cdr = args[args.length-1];
+        return x;
     }, '<p>Returns a list consisting of the elements of the first ' +
                           '<em>list</em> followed by the elements of the other <em>list</em>s.</p>' +
                           '<p>The last argument may be any object; an improper list results if the' +
